@@ -170,7 +170,6 @@
     <div class="w-full max-w-4xl bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
         <h1 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4 sm:mb-6">Mossos calendar by JPL</h1>
 
-        <!-- Selector d'Escamots -->
         <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
             <div class="flex-grow w-full md:w-auto">
                 <label for="escamot-select" class="block text-sm font-medium text-gray-700 mb-1">Selecciona el teu Escamot</label>
@@ -195,7 +194,6 @@
             </div>
         </div>
 
-        <!-- Botons de Navegació del Calendari -->
         <div class="flex justify-between mb-4">
             <button id="prev-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">
                 &lt; Mes Anterior
@@ -208,7 +206,6 @@
             </button>
         </div>
 
-        <!-- Contenidor del Calendari -->
         <div id="calendar-container">
             <div class="grid grid-cols-7 text-center font-bold text-gray-700 bg-gray-200 rounded-t-lg p-2">
                 <div>Dill</div>
@@ -220,14 +217,12 @@
                 <div>Diu</div>
             </div>
             <div id="calendar-grid" class="grid grid-cols-7 gap-1 p-1 sm:p-2 bg-white rounded-b-lg border border-gray-200">
-                <!-- Els dies del calendari es renderitzaran aquí -->
-            </div>
+                </div>
         </div>
         
         <p class="status-message" id="status-message">Conectando...</p>
         <p class="user-id" id="user-id">ID de Usuario: Cargando...</p>
 
-        <!-- Pantalla de Totals -->
         <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h2 id="summary-title" class="text-xl font-bold text-gray-800 mb-4">Resum Anual</h2>
             <div id="totals-display">
@@ -263,12 +258,15 @@
                     <span>Romanent fet any:</span>
                     <span id="total-romanent-fet-hours" class="font-bold">0 h 0 m</span>
                 </div>
+                 <div class="total-item">
+                    <span>Total de judicis:</span>
+                    <span id="total-judicis">0</span>
+                </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Modal d'Anotació -->
     <div id="annotation-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Afegeix una anotació</h2>
@@ -279,13 +277,13 @@
                 <button class="modal-button" data-annotation="Formació">Formació</button>
                 <button class="modal-button" data-annotation="Romanent">Romanent</button>
                 <button class="modal-button" data-annotation="AP">AP</button>
+                <button class="modal-button" data-annotation="Judici">Judici</button>
             </div>
             <button id="clear-annotation-btn" class="modal-button mt-4 bg-red-500 text-white hover:bg-red-600">Eliminar Anotació</button>
             <button id="close-modal-btn" class="modal-button mt-4 bg-gray-300 text-gray-800 hover:bg-gray-400">Tanca</button>
         </div>
     </div>
 
-    <!-- Modal d'Hores de Perllongament/Romanent -->
     <div id="time-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 id="time-modal-title" class="text-xl font-bold mb-4 text-gray-800">Afegeix hores</h2>
@@ -297,7 +295,6 @@
                 <label for="time-minutes-input">Minuts:</label>
                 <input type="number" id="time-minutes-input" value="0" min="0" max="59" class="rounded-md border-gray-300 p-2">
             </div>
-            <!-- Nou camp per al motiu del perllongament -->
             <div id="time-modal-motivo-container" class="input-group flex-col items-start w-full">
                 <label for="time-motivo-input" class="mb-2">Motiu:</label>
                 <textarea id="time-motivo-input" rows="2" class="w-full rounded-md border-gray-300 p-2 resize-none text-center"></textarea>
@@ -306,553 +303,538 @@
             <button id="cancel-time-btn" class="modal-button mt-4 bg-gray-300 text-gray-800 hover:bg-gray-400">Cancel·la</button>
         </div>
     </div>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // IMPORTANTE: AQUI DEBES PEGAR TUS CLAVES DE FIREBASE.
-    // Reemplaza los valores con los que copiaste del Paso 1.
-    const firebaseConfig = {
-      apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
-      authDomain: "mossoscalendar.firebaseapp.com",
-      projectId: "mossoscalendar",
-      storageBucket: "mossoscalendar.firebasestorage.app",
-      messagingSenderId: "357620337746",
-      appId: "1:357620337746:web:46a8f42ad9c6fdafe3e38b",
-      measurementId: "G-B15S9RY6B9"
-    };
-    const appId = "mossos_calendar_by_jpl";
-    
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Variables globales para la gestión de datos
-    let selectedDayDate = null;
-    let currentAnnotationType = null;
-    let annotations = {};
-    let isAuthReady = false;
-    let userId = null;
-    let unsubscribeAnnotations = null; // Esta variable es nueva y muy importante
+        // IMPORTANTE: AQUI DEBES PEGAR TUS CLAVES DE FIREBASE.
+        // Reemplaza los valores con los que copiaste del Paso 1.
+        const firebaseConfig = {
+  apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
+  authDomain: "mossoscalendar.firebaseapp.com",
+  projectId: "mossoscalendar",
+  storageBucket: "mossoscalendar.firebasestorage.app",
+  messagingSenderId: "357620337746",
+  appId: "1:357620337746:web:46a8f42ad9c6fdafe3e38b",
+  measurementId: "G-B15S9RY6B9"
+};
+        const appId = "mossos_calendar_by_jpl"; // Puedes dejar este valor
+        
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
 
-    // UI Elements
-    const escamotSelect = document.getElementById('escamot-select');
-    const monthSelect = document.getElementById('month-select');
-    const yearSelect = document.getElementById('year-select');
-    const calendarGrid = document.getElementById('calendar-grid');
-    const prevMonthBtn = document.getElementById('prev-month-btn');
-    const todayBtn = document.getElementById('today-btn');
-    const nextMonthBtn = document.getElementById('next-month-btn');
-    const annotationModal = document.getElementById('annotation-modal');
-    const annotationOptions = document.getElementById('annotation-options');
-    const clearAnnotationBtn = document.getElementById('clear-annotation-btn');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const timeModal = document.getElementById('time-modal');
-    const timeModalTitle = document.getElementById('time-modal-title');
-    const timeModalMotivoContainer = document.getElementById('time-modal-motivo-container');
-    const timeHoursInput = document.getElementById('time-hours-input');
-    const timeMinutesInput = document.getElementById('time-minutes-input');
-    const timeMotivoInput = document.getElementById('time-motivo-input');
-    const saveTimeBtn = document.getElementById('save-time-btn');
-    const cancelTimeBtn = document.getElementById('cancel-time-btn');
-    const totalPlannedHoursSpan = document.getElementById('total-planned-hours');
-    const totalWorkedHoursSpan = document.getElementById('total-worked-hours');
-    const totalVacancesHoursSpan = document.getElementById('total-vacances-hours');
-    const totalWorkedDaysSpan = document.getElementById('total-worked-days');
-    const totalPerllongamentHoursSpan = document.getElementById('total-perllongament-hours');
-    const totalRomanentPerFerHoursSpan = document.getElementById('total-romanent-per-fer-hours');
-    const totalRomanentFetHoursSpan = document.getElementById('total-romanent-fet-hours');
-    const summaryTitle = document.getElementById('summary-title');
-    const userIdDisplay = document.getElementById('user-id');
-    const statusMessage = document.getElementById('status-message');
+        // UI Elements
+        const escamotSelect = document.getElementById('escamot-select');
+        const monthSelect = document.getElementById('month-select');
+        const yearSelect = document.getElementById('year-select');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const prevMonthBtn = document.getElementById('prev-month-btn');
+        const todayBtn = document.getElementById('today-btn');
+        const nextMonthBtn = document.getElementById('next-month-btn');
+        const annotationModal = document.getElementById('annotation-modal');
+        const annotationOptions = document.getElementById('annotation-options');
+        const clearAnnotationBtn = document.getElementById('clear-annotation-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const timeModal = document.getElementById('time-modal');
+        const timeModalTitle = document.getElementById('time-modal-title');
+        const timeModalMotivoContainer = document.getElementById('time-modal-motivo-container');
+        const timeHoursInput = document.getElementById('time-hours-input');
+        const timeMinutesInput = document.getElementById('time-minutes-input');
+        const timeMotivoInput = document.getElementById('time-motivo-input');
+        const saveTimeBtn = document.getElementById('save-time-btn');
+        const cancelTimeBtn = document.getElementById('cancel-time-btn');
+        const totalPlannedHoursSpan = document.getElementById('total-planned-hours');
+        const totalWorkedHoursSpan = document.getElementById('total-worked-hours');
+        const totalVacancesHoursSpan = document.getElementById('total-vacances-hours');
+        const totalWorkedDaysSpan = document.getElementById('total-worked-days');
+        const totalPerllongamentHoursSpan = document.getElementById('total-perllongament-hours');
+        const totalRomanentPerFerHoursSpan = document.getElementById('total-romanent-per-fer-hours');
+        const totalRomanentFetHoursSpan = document.getElementById('total-romanent-fet-hours');
+        // Nuevas variables para Juicios
+        const totalJudicisSpan = document.getElementById('total-judicis');
+        const summaryTitle = document.getElementById('summary-title');
+        const userIdDisplay = document.getElementById('user-id');
+        const statusMessage = document.getElementById('status-message');
 
-    const months = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"];
+        let selectedDayDate = null;
+        let currentAnnotationType = null;
+        let annotations = {};
+        let isAuthReady = false;
+        let userId = null;
 
-    const WEEK_TYPES = {
-        1: "Festa",
-        2: "Tardes",
-        3: "Nits",
-        4: "Festa",
-        5: "Matins",
-    };
+        const months = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"];
 
-    const SHIFT_ABBREVIATIONS = {
-        'Festa': 'F',
-        'Matins': 'M',
-        'Dia': 'D',
-        'Tardes': 'T',
-        'Nits': 'N',
-        'Tarda/Nit': 'TN'
-    };
+        const WEEK_TYPES = {
+            1: "Festa",
+            2: "Tardes",
+            3: "Nits",
+            4: "Festa",
+            5: "Matins",
+        };
 
-    const ANNOTATION_ABBREVIATIONS = {
-        'Vacances': 'VAC',
-        'Perllongament': 'Per',
-        'Tir': 'Tir',
-        'Formació': 'Formació',
-        'Romanent': 'Rom',
-        'AP': 'AP',
-    };
+        const SHIFT_ABBREVIATIONS = {
+            'Festa': 'F',
+            'Matins': 'M',
+            'Dia': 'D',
+            'Tardes': 'T',
+            'Nits': 'N',
+            'Tarda/Nit': 'TN'
+        };
 
-    const ANNOTATION_FULL_NAMES = {
-        'Vacances': 'Vacances',
-        'Perllongament': 'Perllongament',
-        'Tir': 'Tir',
-        'Formació': 'Formació',
-        'Romanent': 'Romanent',
-        'AP': 'AP',
-    };
+        const ANNOTATION_ABBREVIATIONS = {
+            'Vacances': 'VAC',
+            'Perllongament': 'Per',
+            'Tir': 'Tir',
+            'Formació': 'Formació',
+            'Romanent': 'Rom',
+            'AP': 'AP',
+            'Judici': 'J' // Nuevo
+        };
 
-    const ESCAMOT_BASE_WEEK = {
-        1: 3,
-        2: 3,
-        3: 1,
-        4: 5,
-        5: 4,
-    };
+        const ANNOTATION_FULL_NAMES = {
+            'Vacances': 'Vacances',
+            'Perllongament': 'Perllongament',
+            'Tir': 'Tir',
+            'Formació': 'Formació',
+            'Romanent': 'Romanent',
+            'AP': 'AP',
+            'Judici': 'Judici' // Nuevo
+        };
 
-    const SHIFT_HOURS = {
-        'Matins': 8.5,
-        'Dia': 12,
-        'Tardes': 8.5,
-        'Nits': 8.5,
-        'Tarda/Nit': 12,
-        'Formació': 8.5,
-        'AP': 8.5,
-        'Tir': 8.5,
-        'Romanent': 8.5
-    };
+        const ESCAMOT_BASE_WEEK = {
+            1: 3,
+            2: 3,
+            3: 1,
+            4: 5,
+            5: 4,
+        };
 
-    const ANNUAL_WORK_HOURS = 1680;
-    const VACATION_HOURS = 180;
+        const SHIFT_HOURS = {
+            'Matins': 8.5,
+            'Dia': 12,
+            'Tardes': 8.5,
+            'Nits': 8.5,
+            'Tarda/Nit': 12,
+            'Formació': 8.5,
+            'AP': 8.5,
+            'Tir': 8.5,
+            'Romanent': 8.5,
+            'Judici': 8.5 // Horas por defecto
+        };
 
-    const ANCHOR_MONDAY = new Date('2025-01-27T00:00:00');
-    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+        const ANNUAL_WORK_HOURS = 1680;
+        const VACATION_HOURS = 180;
 
-    function diffDays(a, b) {
-        const utcA = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
-        const utcB = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
-        return Math.floor((utcA - utcB) / MS_PER_DAY);
-    }
+        const ANCHOR_MONDAY = new Date('2025-01-27T00:00:00');
+        const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-    function weekIndexForDate(date, escamot) {
-        const days = diffDays(date, ANCHOR_MONDAY);
-        const offsetWeeks = Math.floor(days / 7);
-        const base = ESCAMOT_BASE_WEEK[escamot] || 1;
-        const idx = ((base - 1 + offsetWeeks) % 5 + 5) % 5;
-        return idx + 1;
-    }
-
-    function getQ5Shift(date, escamot) {
-        const weekIdx = weekIndexForDate(date, escamot);
-        const day = date.getDay();
-        const isWeekend = day === 0 || day === 6;
-
-        switch (weekIdx) {
-            case 1:
-            case 4:
-                return 'Festa';
-            case 2:
-                return isWeekend ? 'Festa' : 'Tardes';
-            case 3:
-                return isWeekend ? 'Tarda/Nit' : 'Nits';
-            case 5:
-                return isWeekend ? 'Dia' : 'Matins';
-            default:
-                return 'Festa';
+        function diffDays(a, b) {
+            const utcA = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+            const utcB = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+            return Math.floor((utcA - utcB) / MS_PER_DAY);
         }
-    }
 
-    async function saveAnnotation(dateKey, annotationData) {
-        if (!isAuthReady || !userId) {
-            console.error("Authentication not ready or userId not set.");
-            return;
+        function weekIndexForDate(date, escamot) {
+            const days = diffDays(date, ANCHOR_MONDAY);
+            const offsetWeeks = Math.floor(days / 7);
+            const base = ESCAMOT_BASE_WEEK[escamot] || 1;
+            const idx = ((base - 1 + offsetWeeks) % 5 + 5) % 5;
+            return idx + 1;
         }
-        const currentEscamot = escamotSelect.value;
-        const annotationDocRef = doc(db, `/artifacts/${appId}/users/${userId}/escamots/${currentEscamot}/annotations/${dateKey}`);
-        try {
-            await setDoc(annotationDocRef, annotationData);
-            console.log("Anotación guardada en Firestore.");
-        } catch (error) {
-            console.error("Error al guardar la anotación en Firestore: ", error);
-        }
-    }
 
-    async function deleteAnnotation(dateKey) {
-        if (!isAuthReady || !userId) {
-            console.error("Authentication not ready or userId not set.");
-            return;
-        }
-        const currentEscamot = escamotSelect.value;
-        const annotationDocRef = doc(db, `/artifacts/${appId}/users/${userId}/escamots/${currentEscamot}/annotations/${dateKey}`);
-        try {
-            await deleteDoc(annotationDocRef);
-            console.log("Anotación eliminada de Firestore.");
-        } catch (error) {
-            console.error("Error al eliminar la anotación de Firestore: ", error);
-        }
-    }
+        function getQ5Shift(date, escamot) {
+            const weekIdx = weekIndexForDate(date, escamot);
+            const day = date.getDay();
+            const isWeekend = day === 0 || day === 6;
 
-    function populateMonthYearSelects() {
-        monthSelect.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
-        const currentYear = new Date().getFullYear();
-        yearSelect.innerHTML = '';
-        for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = i;
-            yearSelect.appendChild(option);
-        }
-    }
-
-    function getShiftColors(shift) {
-        switch (shift) {
-            case 'Festa': return 'bg-green-200 border-green-300';
-            case 'Matins':
-            case 'Dia': return 'bg-blue-200 border-blue-300';
-            case 'Tardes': return 'bg-yellow-200 border-yellow-300';
-            case 'Nits':
-            case 'Tarda/Nit': return 'bg-red-200 border-red-300';
-            default: return 'bg-gray-200 border-gray-300';
-        }
-    }
-
-    function renderCalendar() {
-        const year = parseInt(yearSelect.value);
-        const month = parseInt(monthSelect.value);
-        if (isNaN(year) || isNaN(month)) return;
-
-        calendarGrid.innerHTML = '';
-        const firstDayDate = new Date(year, month, 1);
-        const lastDayDate = new Date(year, month + 1, 0);
-
-        const startDayOffset = firstDayDate.getDay() === 0 ? 6 : firstDayDate.getDay() - 1;
-        const startDate = new Date(firstDayDate);
-        startDate.setDate(startDate.getDate() - startDayOffset);
-
-        const endDayOffset = lastDayDate.getDay() === 0 ? 0 : 7 - lastDayDate.getDay();
-        const endDate = new Date(lastDayDate);
-        endDate.setDate(endDate.getDate() + endDayOffset);
-
-        let currentDate = new Date(startDate);
-        while (currentDate <= endDate) {
-            const day = currentDate.getDate();
-            const currentMonth = currentDate.getMonth();
-            const currentYear = currentDate.getFullYear();
-            const shift = getQ5Shift(currentDate, parseInt(escamotSelect.value));
-            const abbreviatedShift = SHIFT_ABBREVIATIONS[shift] || shift;
-            const isToday = currentDate.getFullYear() === new Date().getFullYear() &&
-                currentDate.getMonth() === new Date().getMonth() &&
-                currentDate.getDate() === new Date().getDate();
-
-            const dateKey = currentDate.toISOString().split('T')[0];
-            const annotation = annotations[dateKey] || '';
-
-            const dayBox = document.createElement('div');
-            dayBox.dataset.date = dateKey;
-            
-            let dayBoxClasses = `day-box rounded-lg p-2 text-center shadow-sm border ${getShiftColors(shift)}`;
-            let textClasses = '';
-
-            if (currentMonth !== month || currentYear !== year) {
-                dayBoxClasses += ' faded';
+            switch (weekIdx) {
+                case 1:
+                case 4:
+                    return 'Festa';
+                case 2:
+                    return isWeekend ? 'Festa' : 'Tardes';
+                case 3:
+                    return isWeekend ? 'Tarda/Nit' : 'Nits';
+                case 5:
+                    return isWeekend ? 'Dia' : 'Matins';
+                default:
+                    return 'Festa';
             }
+        }
 
-            if (isToday) {
-                textClasses = 'text-red-500 font-bold';
+        async function saveAnnotation(dateKey, annotationData) {
+            if (!isAuthReady || !userId) {
+                console.error("Authentication not ready or userId not set.");
+                return;
             }
+            const annotationDocRef = doc(db, `/artifacts/${appId}/users/${userId}/annotations/${dateKey}`);
+            try {
+                await setDoc(annotationDocRef, annotationData);
+                console.log("Anotación guardada en Firestore.");
+            } catch (error) {
+                console.error("Error al guardar la anotación en Firestore: ", error);
+            }
+        }
 
-            let annotationTextFull = '';
-            let annotationTextAbbreviated = '';
-            let hoursMinutesText = '';
+        async function deleteAnnotation(dateKey) {
+            if (!isAuthReady || !userId) {
+                console.error("Authentication not ready or userId not set.");
+                return;
+            }
+            const annotationDocRef = doc(db, `/artifacts/${appId}/users/${userId}/annotations/${dateKey}`);
+            try {
+                await deleteDoc(annotationDocRef);
+                console.log("Anotación eliminada de Firestore.");
+            } catch (error) {
+                console.error("Error al eliminar la anotación de Firestore: ", error);
+            }
+        }
 
-            if (annotation) {
-                const annotationType = annotation.type;
-                annotationTextFull = ANNOTATION_FULL_NAMES[annotationType] || annotationType;
-                annotationTextAbbreviated = ANNOTATION_ABBREVIATIONS[annotationType] || annotationType;
+        function populateMonthYearSelects() {
+            monthSelect.innerHTML = months.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        function getShiftColors(shift) {
+            switch (shift) {
+                case 'Festa': return 'bg-green-200 border-green-300';
+                case 'Matins':
+                case 'Dia': return 'bg-blue-200 border-blue-300';
+                case 'Tardes': return 'bg-yellow-200 border-yellow-300';
+                case 'Nits':
+                case 'Tarda/Nit': return 'bg-red-200 border-red-300';
+                default: return 'bg-gray-200 border-gray-300';
+            }
+        }
+
+        function renderCalendar() {
+            const year = parseInt(yearSelect.value);
+            const month = parseInt(monthSelect.value);
+            if (isNaN(year) || isNaN(month)) return;
+
+            calendarGrid.innerHTML = '';
+            const firstDayDate = new Date(year, month, 1);
+            const lastDayDate = new Date(year, month + 1, 0);
+
+            const startDayOffset = firstDayDate.getDay() === 0 ? 6 : firstDayDate.getDay() - 1;
+            const startDate = new Date(firstDayDate);
+            startDate.setDate(startDate.getDate() - startDayOffset);
+
+            const endDayOffset = lastDayDate.getDay() === 0 ? 0 : 7 - lastDayDate.getDay();
+            const endDate = new Date(lastDayDate);
+            endDate.setDate(endDate.getDate() + endDayOffset);
+
+            let currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                const day = currentDate.getDate();
+                const currentMonth = currentDate.getMonth();
+                const currentYear = currentDate.getFullYear();
+                const shift = getQ5Shift(currentDate, parseInt(escamotSelect.value));
+                const abbreviatedShift = SHIFT_ABBREVIATIONS[shift] || shift;
+                const isToday = currentDate.getFullYear() === new Date().getFullYear() &&
+                                currentDate.getMonth() === new Date().getMonth() &&
+                                currentDate.getDate() === new Date().getDate();
+
+                const dateKey = currentDate.toISOString().split('T')[0];
+                const annotation = annotations[dateKey] || '';
+
+                const dayBox = document.createElement('div');
+                dayBox.dataset.date = dateKey;
                 
-                switch (annotationType) {
-                    case 'Vacances':
-                        dayBoxClasses = 'day-box rounded-lg p-2 text-center shadow-sm border bg-purple-400 border-purple-600';
-                        textClasses = 'text-white font-bold';
-                        break;
-                    case 'Perllongament':
-                    case 'Romanent':
-                        dayBoxClasses += ` annotation-highlight`;
-                        if (annotation.motivo) {
-                            dayBox.title = annotation.motivo;
-                        }
-                        if (annotation.hours !== undefined && annotation.minutes !== undefined) {
-                            hoursMinutesText = `<br>${annotation.hours}h ${annotation.minutes}m`;
-                        }
-                        break;
-                    case 'AP':
-                        dayBoxClasses = 'day-box rounded-lg p-2 text-center shadow-sm border bg-fuchsia-400 border-fuchsia-600';
-                        textClasses = 'text-white font-bold';
-                        break;
+                let dayBoxClasses = `day-box rounded-lg p-2 text-center shadow-sm border ${getShiftColors(shift)}`;
+                let textClasses = '';
+
+                if (currentMonth !== month || currentYear !== year) {
+                    dayBoxClasses += ' faded';
                 }
+
+                if (isToday) {
+                    textClasses = 'text-red-500 font-bold';
+                }
+
+                let annotationTextFull = '';
+                let annotationTextAbbreviated = '';
+                let hoursMinutesText = '';
+
+                if (annotation) {
+                    const annotationType = annotation.type;
+                    annotationTextFull = ANNOTATION_FULL_NAMES[annotationType] || annotationType;
+                    annotationTextAbbreviated = ANNOTATION_ABBREVIATIONS[annotationType] || annotationType;
+                    
+                    switch (annotationType) {
+                        case 'Vacances':
+                            dayBoxClasses = 'day-box rounded-lg p-2 text-center shadow-sm border bg-purple-400 border-purple-600';
+                            textClasses = 'text-white font-bold';
+                            break;
+                        case 'Perllongament':
+                        case 'Romanent':
+                            dayBoxClasses += ` annotation-highlight`;
+                            if (annotation.motivo) {
+                                dayBox.title = annotation.motivo;
+                            }
+                            if (annotation.hours !== undefined && annotation.minutes !== undefined) {
+                                hoursMinutesText = `<br>${annotation.hours}h ${annotation.minutes}m`;
+                            }
+                            break;
+                        case 'AP':
+                            dayBoxClasses = 'day-box rounded-lg p-2 text-center shadow-sm border bg-fuchsia-400 border-fuchsia-600';
+                            textClasses = 'text-white font-bold';
+                            break;
+                        case 'Judici':
+                            dayBoxClasses = 'day-box rounded-lg p-2 text-center shadow-sm border bg-yellow-500 border-yellow-700';
+                            textClasses = 'text-white font-bold';
+                            break;
+                    }
+                }
+                
+                dayBox.className = dayBoxClasses;
+                dayBox.innerHTML = `
+                    <span class="day-number ${textClasses}">${day}</span>
+                    <span class="day-shift ${textClasses}">${abbreviatedShift}</span>
+                    <span class="day-annotation hidden sm:inline ${textClasses}">${annotationTextFull}${hoursMinutesText}</span>
+                    <span class="day-annotation inline sm:hidden ${textClasses}">${annotationTextAbbreviated}${hoursMinutesText}</span>
+                `;
+                calendarGrid.appendChild(dayBox);
+
+                currentDate.setDate(currentDate.getDate() + 1);
             }
+
+            calculateTotals();
+        }
+
+        function updateMonth(offset) {
+            let year = parseInt(yearSelect.value);
+            let month = parseInt(monthSelect.value);
             
-            dayBox.className = dayBoxClasses;
-            dayBox.innerHTML = `
-                <span class="day-number ${textClasses}">${day}</span>
-                <span class="day-shift ${textClasses}">${abbreviatedShift}</span>
-                <span class="day-annotation hidden sm:inline ${textClasses}">${annotationTextFull}${hoursMinutesText}</span>
-                <span class="day-annotation inline sm:hidden ${textClasses}">${annotationTextAbbreviated}${hoursMinutesText}</span>
-            `;
-            calendarGrid.appendChild(dayBox);
-
-            currentDate.setDate(currentDate.getDate() + 1);
+            let newDate = new Date(year, month + offset, 1);
+            
+            yearSelect.value = newDate.getFullYear();
+            monthSelect.value = newDate.getMonth();
+            
+            renderCalendar();
         }
 
-        calculateTotals();
-    }
+        function goToToday() {
+            const today = new Date();
+            monthSelect.value = today.getMonth();
+            yearSelect.value = today.getFullYear();
+            renderCalendar();
+        }
 
-    function updateMonth(offset) {
-        let year = parseInt(yearSelect.value);
-        let month = parseInt(monthSelect.value);
-        
-        let newDate = new Date(year, month + offset, 1);
-        
-        yearSelect.value = newDate.getFullYear();
-        monthSelect.value = newDate.getMonth();
-        
-        renderCalendar();
-    }
+        function calculateTotals() {
+            const year = parseInt(yearSelect.value);
+            const escamot = parseInt(escamotSelect.value);
+            
+            let totalPlannedHoursFixed = 0;
+            let totalWorkedDaysFixed = 0;
+            const startDateFixed = new Date('2025-02-01');
+            const endDateFixed = new Date('2026-01-31');
+            const dayMs = 1000 * 60 * 60 * 24;
+            let currentDateFixed = new Date(startDateFixed);
 
-    function goToToday() {
-        const today = new Date();
-        monthSelect.value = today.getMonth();
-        yearSelect.value = today.getFullYear();
-        renderCalendar();
-    }
-
-    function calculateTotals() {
-        const year = parseInt(yearSelect.value);
-        const escamot = parseInt(escamotSelect.value);
-        
-        let totalPlannedHoursFixed = 0;
-        let totalWorkedDaysFixed = 0;
-        const startDateFixed = new Date('2025-02-01');
-        const endDateFixed = new Date('2026-01-31');
-        const dayMs = 1000 * 60 * 60 * 24;
-        let currentDateFixed = new Date(startDateFixed);
-
-        while (currentDateFixed.getTime() <= endDateFixed.getTime()) {
-            const shift = getQ5Shift(currentDateFixed, escamot);
-            if (shift !== 'Festa') {
-                totalPlannedHoursFixed += SHIFT_HOURS[shift];
-                totalWorkedDaysFixed++;
+            while (currentDateFixed.getTime() <= endDateFixed.getTime()) {
+                const shift = getQ5Shift(currentDateFixed, escamot);
+                if (shift !== 'Festa') {
+                    totalPlannedHoursFixed += SHIFT_HOURS[shift];
+                    totalWorkedDaysFixed++;
+                }
+                currentDateFixed.setTime(currentDateFixed.getTime() + dayMs);
             }
-            currentDateFixed.setTime(currentDateFixed.getTime() + dayMs);
-        }
 
-        let totalPerllongamentHours = 0;
-        let totalPerllongamentMinutes = 0;
-        let totalRomanentHours = 0;
-        let totalRomanentMinutes = 0;
-        
-        for (const dateKey in annotations) {
-            const annotation = annotations[dateKey];
-            if (annotation.type === 'Perllongament') {
-                totalPerllongamentHours += annotation.hours || 0;
-                totalPerllongamentMinutes += annotation.minutes || 0;
+            let totalPerllongamentHours = 0;
+            let totalPerllongamentMinutes = 0;
+            let totalRomanentHours = 0;
+            let totalRomanentMinutes = 0;
+            let totalJuicios = 0; // Nueva variable para contar los juicios
+            
+            for (const dateKey in annotations) {
+                const annotation = annotations[dateKey];
+                if (annotation.type === 'Perllongament') {
+                    totalPerllongamentHours += annotation.hours || 0;
+                    totalPerllongamentMinutes += annotation.minutes || 0;
+                }
+                if (annotation.type === 'Romanent') {
+                    totalRomanentHours += annotation.hours || 0;
+                    totalRomanentMinutes += annotation.minutes || 0;
+                }
+                if (annotation.type === 'Judici') {
+                    totalJuicios++; // Incrementar el contador de juicios
+                }
             }
-            if (annotation.type === 'Romanent') {
-                totalRomanentHours += annotation.hours || 0;
-                totalRomanentMinutes += annotation.minutes || 0;
+
+            totalPerllongamentHours += Math.floor(totalPerllongamentMinutes / 60);
+            totalPerllongamentMinutes = totalPerllongamentMinutes % 60;
+
+            totalRomanentHours += Math.floor(totalRomanentMinutes / 60);
+            totalRomanentMinutes = totalRomanentMinutes % 60;
+
+            const totalWorkedHours = totalPlannedHoursFixed - VACATION_HOURS;
+
+            const plannedMinutes = Math.round(totalPlannedHoursFixed * 60);
+            const displayPlannedHours = Math.floor(plannedMinutes / 60);
+            const displayPlannedMinutes = (plannedMinutes % 60).toString().padStart(2, '0');
+            totalPlannedHoursSpan.textContent = `${displayPlannedHours} h ${displayPlannedMinutes} m`;
+            
+            const workedMinutes = Math.round(totalWorkedHours * 60);
+            const displayWorkedHours = Math.floor(workedMinutes / 60);
+            const displayWorkedMinutes = (workedMinutes % 60).toString().padStart(2, '0');
+            totalWorkedHoursSpan.textContent = `${displayWorkedHours} h ${displayWorkedMinutes} m`;
+            
+            totalVacancesHoursSpan.textContent = `${VACATION_HOURS} h 00 m`;
+            totalWorkedDaysSpan.textContent = `${totalWorkedDaysFixed} dies`;
+            totalPerllongamentHoursSpan.textContent = `${totalPerllongamentHours} h ${totalPerllongamentMinutes.toString().padStart(2, '0')} m`;
+            
+            const netBalanceMinutes = Math.round((totalWorkedHours - ANNUAL_WORK_HOURS) * 60);
+
+            totalRomanentFetHoursSpan.textContent = `${totalRomanentHours} h ${totalRomanentMinutes.toString().padStart(2, '0')} m`;
+            totalRomanentFetHoursSpan.classList.add('text-blue-500');
+
+            if (netBalanceMinutes < 0) {
+                const displayRomanentPerFerMinutes = Math.abs(netBalanceMinutes);
+                const displayRomanentPerFerHours = Math.floor(displayRomanentPerFerMinutes / 60);
+                const displayRomanentPerFerMinutesRemainder = (displayRomanentPerFerMinutes % 60).toString().padStart(2, '0');
+                totalRomanentPerFerHoursSpan.textContent = `${displayRomanentPerFerHours} h ${displayRomanentPerFerMinutesRemainder} m`;
+                totalRomanentPerFerHoursSpan.classList.add('text-red-500');
+            } else {
+                totalRomanentPerFerHoursSpan.textContent = `0 h 00 m`;
+                totalRomanentPerFerHoursSpan.classList.remove('text-red-500');
             }
+            // Actualizar el contador de juicios
+            totalJudicisSpan.textContent = totalJuicios;
+
+            summaryTitle.textContent = `Resum Anual (1 de Febrer de 2025 - 31 de Gener de 2026)`;
         }
 
-        totalPerllongamentHours += Math.floor(totalPerllongamentMinutes / 60);
-        totalPerllongamentMinutes = totalPerllongamentMinutes % 60;
+        // Show annotation modal
+        calendarGrid.addEventListener('click', (event) => {
+            const dayBox = event.target.closest('.day-box');
+            if (dayBox && dayBox.dataset.date) {
+                if (dayBox.classList.contains('faded')) {
+                    const clickedDate = new Date(dayBox.dataset.date);
+                    const currentMonth = parseInt(monthSelect.value);
+                    const currentYear = parseInt(yearSelect.value);
+                    const firstDayOfCurrentMonth = new Date(currentYear, currentMonth, 1);
 
-        totalRomanentHours += Math.floor(totalRomanentMinutes / 60);
-        totalRomanentMinutes = totalRomanentMinutes % 60;
-
-        const totalWorkedHours = totalPlannedHoursFixed - VACATION_HOURS;
-
-        const plannedMinutes = Math.round(totalPlannedHoursFixed * 60);
-        const displayPlannedHours = Math.floor(plannedMinutes / 60);
-        const displayPlannedMinutes = (plannedMinutes % 60).toString().padStart(2, '0');
-        totalPlannedHoursSpan.textContent = `${displayPlannedHours} h ${displayPlannedMinutes} m`;
-        
-        const workedMinutes = Math.round(totalWorkedHours * 60);
-        const displayWorkedHours = Math.floor(workedMinutes / 60);
-        const displayWorkedMinutes = (workedMinutes % 60).toString().padStart(2, '0');
-        totalWorkedHoursSpan.textContent = `${displayWorkedHours} h ${displayWorkedMinutes} m`;
-        
-        totalVacancesHoursSpan.textContent = `${VACATION_HOURS} h 00 m`;
-        totalWorkedDaysSpan.textContent = `${totalWorkedDaysFixed} dies`;
-        totalPerllongamentHoursSpan.textContent = `${totalPerllongamentHours} h ${totalPerllongamentMinutes.toString().padStart(2, '0')} m`;
-        
-        const netBalanceMinutes = Math.round((totalWorkedHours - ANNUAL_WORK_HOURS) * 60);
-
-        totalRomanentFetHoursSpan.textContent = `${totalRomanentHours} h ${totalRomanentMinutes.toString().padStart(2, '0')} m`;
-        totalRomanentFetHoursSpan.classList.add('text-blue-500');
-
-        if (netBalanceMinutes < 0) {
-            const displayRomanentPerFerMinutes = Math.abs(netBalanceMinutes);
-            const displayRomanentPerFerHours = Math.floor(displayRomanentPerFerMinutes / 60);
-            const displayRomanentPerFerMinutesRemainder = (displayRomanentPerFerMinutes % 60).toString().padStart(2, '0');
-            totalRomanentPerFerHoursSpan.textContent = `${displayRomanentPerFerHours} h ${displayRomanentPerFerMinutesRemainder} m`;
-            totalRomanentPerFerHoursSpan.classList.add('text-red-500');
-        } else {
-            totalRomanentPerFerHoursSpan.textContent = `0 h 00 m`;
-            totalRomanentPerFerHoursSpan.classList.remove('text-red-500');
-        }
-
-        summaryTitle.textContent = `Resum Anual (1 de Febrer de 2025 - 31 de Gener de 2026)`;
-    }
-
-    // Show annotation modal
-    calendarGrid.addEventListener('click', (event) => {
-        const dayBox = event.target.closest('.day-box');
-        if (dayBox && dayBox.dataset.date) {
-            if (dayBox.classList.contains('faded')) {
-                const clickedDate = new Date(dayBox.dataset.date);
-                const currentMonth = parseInt(monthSelect.value);
-                const currentYear = parseInt(yearSelect.value);
-                const firstDayOfCurrentMonth = new Date(currentYear, currentMonth, 1);
-
-                if (clickedDate.getTime() > firstDayOfCurrentMonth.getTime()) {
-                    updateMonth(1);
+                    if (clickedDate.getTime() > firstDayOfCurrentMonth.getTime()) {
+                        updateMonth(1);
+                    } else {
+                        updateMonth(-1);
+                    }
                 } else {
-                    updateMonth(-1);
+                    selectedDayDate = dayBox.dataset.date;
+                    annotationModal.classList.remove('hidden');
                 }
-            } else {
-                selectedDayDate = dayBox.dataset.date;
-                annotationModal.classList.remove('hidden');
             }
-        }
-    });
-
-    // Handle annotation button clicks
-    annotationOptions.addEventListener('click', (event) => {
-        const annotation = event.target.dataset.annotation;
-        if (!annotation) return;
-
-        if (annotation === 'Perllongament' || annotation === 'Romanent') {
-            annotationModal.classList.add('hidden');
-            timeModal.classList.remove('hidden');
-            currentAnnotationType = annotation;
-            timeModalTitle.textContent = `Afegeix hores de ${annotation}`;
-            timeModalMotivoContainer.classList.remove('hidden');
-            const existingAnnotation = annotations[selectedDayDate];
-            if (existingAnnotation && existingAnnotation.type === annotation) {
-                timeHoursInput.value = existingAnnotation.hours || 0;
-                timeMinutesInput.value = existingAnnotation.minutes || 0;
-                timeMotivoInput.value = existingAnnotation.motivo || '';
-            } else {
-                timeHoursInput.value = 0;
-                timeMinutesInput.value = 0;
-                timeMotivoInput.value = '';
-            }
-        } else {
-            saveAnnotation(selectedDayDate, { type: annotation });
-            annotationModal.classList.add('hidden');
-        }
-    });
-
-    // Clear annotation button
-    clearAnnotationBtn.addEventListener('click', () => {
-        deleteAnnotation(selectedDayDate);
-        annotationModal.classList.add('hidden');
-    });
-
-    // Close annotation modal
-    closeModalBtn.addEventListener('click', () => {
-        annotationModal.classList.add('hidden');
-    });
-
-    // Save time button
-    saveTimeBtn.addEventListener('click', () => {
-        const hours = parseInt(timeHoursInput.value) || 0;
-        const minutes = parseInt(timeMinutesInput.value) || 0;
-        const motivo = timeMotivoInput.value.trim();
-        saveAnnotation(selectedDayDate, { type: currentAnnotationType, hours: hours, minutes: minutes, motivo: motivo });
-        timeModal.classList.add('hidden');
-    });
-
-    // Cancel time button
-    cancelTimeBtn.addEventListener('click', () => {
-        timeModal.classList.add('hidden');
-    });
-
-    // Eventos de los selectores y botones de navegación
-    escamotSelect.addEventListener('change', () => {
-        localStorage.setItem('selectedEscamot', escamotSelect.value);
-        if (isAuthReady) {
-            loadAndRenderAnnotations();
-        } else {
-            renderCalendar();
-        }
-    });
-    
-    monthSelect.addEventListener('change', renderCalendar);
-    yearSelect.addEventListener('change', renderCalendar);
-    prevMonthBtn.addEventListener('click', () => updateMonth(-1));
-    todayBtn.addEventListener('click', goToToday);
-    nextMonthBtn.addEventListener('click', () => updateMonth(1));
-
-    function loadSavedEscamot() {
-        const savedEscamot = localStorage.getItem('selectedEscamot');
-        if (savedEscamot) {
-            escamotSelect.value = savedEscamot;
-        }
-    }
-
-    function loadAndRenderAnnotations() {
-        if (unsubscribeAnnotations) {
-            unsubscribeAnnotations();
-        }
-
-        annotations = {};
-        const currentEscamot = escamotSelect.value;
-        const annotationsRef = collection(db, `artifacts/${appId}/users/${userId}/escamots/${currentEscamot}/annotations`);
-
-        unsubscribeAnnotations = onSnapshot(annotationsRef, (snapshot) => {
-            snapshot.docChanges().forEach(change => {
-                const docData = change.doc.data();
-                if (change.type === 'added' || change.type === 'modified') {
-                    annotations[change.doc.id] = docData;
-                }
-                if (change.type === 'removed') {
-                    delete annotations[change.doc.id];
-                }
-            });
-            renderCalendar();
-        }, (error) => {
-            console.error("Error al obtener anotaciones: ", error);
-            statusMessage.textContent = "Error al cargar las anotaciones.";
         });
-    }
 
-    // Proceso de inicialización
-    populateMonthYearSelects();
-    goToToday();
-    loadSavedEscamot();
-    loadAndRenderAnnotations();
+        // Handle annotation button clicks
+        annotationOptions.addEventListener('click', (event) => {
+            const annotation = event.target.dataset.annotation;
+            if (!annotation) return;
 
-    // Autenticación anónima y carga de datos inicial
-    signInAnonymously(auth)
-        .then(async (userCredential) => {
-            isAuthReady = true;
-            userId = userCredential.user.uid;
+            if (annotation === 'Perllongament' || annotation === 'Romanent') {
+                annotationModal.classList.add('hidden');
+                timeModal.classList.remove('hidden');
+                currentAnnotationType = annotation;
+                timeModalTitle.textContent = `Afegeix hores de ${annotation}`;
+                timeModalMotivoContainer.classList.remove('hidden');
+                const existingAnnotation = annotations[selectedDayDate];
+                if (existingAnnotation && existingAnnotation.type === annotation) {
+                    timeHoursInput.value = existingAnnotation.hours || 0;
+                    timeMinutesInput.value = existingAnnotation.minutes || 0;
+                    timeMotivoInput.value = existingAnnotation.motivo || '';
+                } else {
+                    timeHoursInput.value = 0;
+                    timeMinutesInput.value = 0;
+                    timeMotivoInput.value = '';
+                }
+            } else {
+                saveAnnotation(selectedDayDate, { type: annotation });
+                annotationModal.classList.add('hidden');
+            }
+        });
+
+        clearAnnotationBtn.addEventListener('click', () => {
+            deleteAnnotation(selectedDayDate);
+            annotationModal.classList.add('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            annotationModal.classList.add('hidden');
+        });
+        
+        saveTimeBtn.addEventListener('click', () => {
+            const hours = parseInt(timeHoursInput.value) || 0;
+            const minutes = parseInt(timeMinutesInput.value) || 0;
+            const motivo = timeMotivoInput.value.trim();
+
+            if (hours === 0 && minutes === 0) {
+                deleteAnnotation(selectedDayDate);
+            } else {
+                saveAnnotation(selectedDayDate, {
+                    type: currentAnnotationType,
+                    hours: hours,
+                    minutes: minutes,
+                    motivo: motivo
+                });
+            }
+            timeModal.classList.add('hidden');
+        });
+
+        cancelTimeBtn.addEventListener('click', () => {
+            timeModal.classList.add('hidden');
+        });
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            populateMonthYearSelects();
+            goToToday();
+        });
+
+        // Event listeners for UI controls
+        escamotSelect.addEventListener('change', renderCalendar);
+        monthSelect.addEventListener('change', renderCalendar);
+        yearSelect.addEventListener('change', renderCalendar);
+        prevMonthBtn.addEventListener('click', () => updateMonth(-1));
+        nextMonthBtn.addEventListener('click', () => updateMonth(1));
+        todayBtn.addEventListener('click', goToToday);
+
+        // Firebase Auth listener
+        // El usuario se autentica de forma anónima para tener un ID único
+        signInAnonymously(auth).then((result) => {
+            userId = result.user.uid;
             userIdDisplay.textContent = `ID de Usuario: ${userId}`;
-            statusMessage.textContent = "Conexión exitosa";
-            console.log("Sesión de usuario anónimo iniciada con ID:", userId);
-            loadAndRenderAnnotations();
-        })
-        .catch((error) => {
-            isAuthReady = false;
-            userIdDisplay.textContent = `Error de autenticación.`;
-            statusMessage.textContent = "Error de autenticación. Verifica la configuración de Firebase.";
-            console.error("Error de autenticación:", error);
+            statusMessage.textContent = "Conectado. Anotaciones guardadas en tu cuenta.";
+            isAuthReady = true;
+
+            // Escuchar cambios en la base de datos en tiempo real para este usuario
+            onSnapshot(collection(db, `/artifacts/${appId}/users/${userId}/annotations`), (snapshot) => {
+                annotations = {};
+                snapshot.forEach((doc) => {
+                    annotations[doc.id] = doc.data();
+                });
+                renderCalendar();
+            }, (error) => {
+                console.error("Error fetching data from Firestore: ", error);
+                statusMessage.textContent = "Error al conectar con la base de datos.";
+            });
+
+        }).catch((error) => {
+            console.error("Authentication error: ", error);
+            statusMessage.textContent = "Error de autenticación.";
         });
-</script> 
+    </script>
 </body>
 </html>
 
