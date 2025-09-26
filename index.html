@@ -212,21 +212,15 @@
     // 1) Ve a Firebase Console -> Project -> Configuración de la app web -> copia el objeto firebaseConfig
     // 2) Pega aquí debajo reemplazando el objeto vacío.
     const firebaseConfig = {
-     apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
-
+  apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
   authDomain: "mossoscalendar.firebaseapp.com",
-
   projectId: "mossoscalendar",
-
-  storageBucket: "mossoscalendar.firebasestorage.app",
-
+  storageBucket: "mossoscalendar.appspot.com",  // ← corregido
   messagingSenderId: "357620337746",
-
   appId: "1:357620337746:web:46a8f42ad9c6fdafe3e38b",
-
   measurementId: "G-B15S9RY6B9"
+};
 
-    };
     // ==============================================================================
 
     if (!firebaseConfig || !firebaseConfig.apiKey) {
@@ -789,6 +783,7 @@
   </script>
 </body>
 </html>
+
 
 
 
