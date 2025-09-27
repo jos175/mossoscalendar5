@@ -36,7 +36,6 @@
     }
     .user-id { font-size:0.75rem; color:#6B7280; margin-top:1rem; text-align:center; word-break:break-all; }
     .status-message { margin-top:0.5rem; font-size:0.875rem; color:#4B5563; text-align:center; }
-    /* small auth UI tweaks */
     .auth-btn { padding:6px 10px; border-radius:8px; font-weight:600; border:1px solid #E5E7EB; background:white; }
     .small-muted { font-size:0.8rem; color:#6B7280; }
   </style>
@@ -189,11 +188,14 @@
       onAuthStateChanged,
       signInAnonymously,
       signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       GoogleAuthProvider,
       signOut,
       createUserWithEmailAndPassword,
       signInWithEmailAndPassword,
       linkWithPopup,
+      linkWithRedirect,
       linkWithCredential,
       EmailAuthProvider
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -209,28 +211,35 @@
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // ====== CONFIGURA AQUI >>> Sustituye por tus credenciales de Firebase <<<< ======
-    // 1) Ve a Firebase Console -> Project -> Configuración de la app web -> copia el objeto firebaseConfig
-    // 2) Pega aquí debajo reemplazando el objeto vacío.
     const firebaseConfig = {
-  apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
-  authDomain: "mossoscalendar.firebaseapp.com",
-  projectId: "mossoscalendar",
-  storageBucket: "mossoscalendar.appspot.com",  // ← corregido
-  messagingSenderId: "357620337746",
-  appId: "1:357620337746:web:46a8f42ad9c6fdafe3e38b",
-  measurementId: "G-B15S9RY6B9"
-};
-
-    // ==============================================================================
+      apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
+      authDomain: "mossoscalendar.firebaseapp.com",
+      projectId: "mossoscalendar",
+      storageBucket: "mossoscalendar.appspot.com",
+      messagingSenderId: "357620337746",
+      appId: "1:357620337746:web:46a8f42ad9c6fdafe3e38b",
+      measurementId: "G-B15S9RY6B9"
+    };
 
     if (!firebaseConfig || !firebaseConfig.apiKey) {
-      alert("Por favor pega tu firebaseConfig en el archivo antes de usar la app. Revisa las instrucciones en el README.");
+      alert("Por favor pega tu firebaseConfig en el archivo antes de usar la app.");
     }
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const appId = "mossos_calendar_by_jpl"; // ruta base usada en Firestore
+    auth.useDeviceLanguage?.();
+    const appId = "mossos_calendar_by_jpl";
+
+    // --- Google provider (definido una vez) + preferencia popup con fallback a redirect
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: "select_account" });
+
+    // LocalStorage keys para preservar datos si usamos redirect
+    const LS_KEYS = {
+      anonData: "mc_tmp_anonData",
+      anonUid: "mc_tmp_anonUid"
+    };
 
     // UI elements
     const escamotSelect = document.getElementById('escamot-select');
@@ -304,8 +313,7 @@
     function getQ5Shift(date, escamot){ const weekIdx = weekIndexForDate(date, escamot); const day=date.getDay(); const isWeekend = day===0||day===6; switch(weekIdx){ case 1: case 4: return 'Festa'; case 2: return isWeekend ? 'Festa' : 'Tardes'; case 3: return isWeekend ? 'Tarda/Nit' : 'Nits'; case 5: return isWeekend ? 'Dia' : 'Matins'; default: return 'Festa'; } }
     function getShiftColors(shift){ switch(shift){ case 'Festa': return 'bg-green-200 border-green-300'; case 'Matins': case 'Dia': return 'bg-blue-200 border-blue-300'; case 'Tardes': return 'bg-yellow-200 border-yellow-300'; case 'Nits': case 'Tarda/Nit': return 'bg-red-200 border-red-300'; default: return 'bg-gray-200 border-gray-300'; } }
 
-    // ---------- Firestore: rutas que incluyen escamot ----------
-    // Guarda una anotación en /artifacts/{appId}/users/{userId}/escamots/{escamot}/annotations/{dateKey}
+    // ---------- Firestore: rutas con escamot ----------
     async function saveAnnotation(dateKey, annotationData) {
       if (!userId) { statusMessage.textContent = "No autenticado aún."; return; }
       const escamot = escamotSelect.value;
@@ -319,7 +327,6 @@
       }
     }
 
-    // Elimina una anotación en la ruta del escamot seleccionado
     async function deleteAnnotationForEscamot(dateKey) {
       if (!userId) { statusMessage.textContent = "No autenticado aún."; return; }
       const escamot = escamotSelect.value;
@@ -333,7 +340,6 @@
       }
     }
 
-    // Subscribir a las anotaciones del escamot seleccionado (y cancelar la anterior)
     function subscribeAnnotations(escamot) {
       if (!userId) return;
       if (unsubscribeAnnotations) unsubscribeAnnotations();
@@ -348,10 +354,8 @@
       });
     }
 
-    // ---------- Helpers para migrar/leer anotaciones desde un uid (útil para usuarios anónimos) ----------
     async function fetchAllAnnotationsForUserUid(uid) {
       const data = {};
-      // Si tienes solo 5 escamots, los iteramos (si tienes más, ajusta)
       for (let esc = 1; esc <= 5; esc++) {
         const escStr = String(esc);
         data[escStr] = {};
@@ -374,8 +378,6 @@
             const existing = await getDoc(docRef);
             if (!existing.exists()) {
               await setDoc(docRef, annotationsData[esc][dateKey]);
-            } else {
-              // si ya existe, aquí decidimos NO sobreescribir para no perder datos
             }
           } catch (err) {
             console.error("Error writing annotation to dest:", err);
@@ -384,7 +386,6 @@
       }
     }
 
-    // ---------- Calendar rendering ----------
     function populateMonthYearSelects(){
       monthSelect.innerHTML = months.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
       const currentYear = new Date().getFullYear();
@@ -490,7 +491,6 @@
       todayDateSpan.textContent = `${dd}/${mm}/${yy}`;
     }
 
-    // Totals (la teva lógica original, sense canvis essencials)
     function calculateTotals(){
       const escamot = parseInt(escamotSelect.value);
       let totalPlannedHoursFixed = 0; let totalWorkedDaysFixed = 0;
@@ -541,7 +541,7 @@
       summaryTitle.textContent = `Resum Anual (1 de Febrer de 2025 - 31 de Gener de 2026)`;
     }
 
-    // ---------- Event handlers ----------
+    // ---------- UI events ----------
     calendarGrid.addEventListener('click', (event) => {
       const dayBox = event.target.closest('.day-box');
       if (!dayBox || !dayBox.dataset.date) return;
@@ -601,19 +601,18 @@
 
     cancelTimeBtn.addEventListener('click', () => timeModal.classList.add('hidden'));
 
-    // ---------- Init & auth ----------
     function restoreEscamotFromLocalStorage() {
       const savedEscamot = localStorage.getItem("selectedEscamot");
       if (savedEscamot) escamotSelect.value = savedEscamot;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       populateMonthYearSelects();
       restoreEscamotFromLocalStorage();
       goToToday();
       updateTodayDateDisplay();
-      // Si no hay usuario, nos autenticamos anónimamente para poder trabajar (y permitir luego linkear)
-      // onAuthStateChanged se encargará de suscribirse
+      // Procesa resultado si venimos de redirect (Google)
+      await handleRedirectResultIfAny();
     });
 
     escamotSelect.addEventListener('change', () => {
@@ -627,7 +626,7 @@
     nextMonthBtn.addEventListener('click', () => updateMonth(1));
     todayBtn.addEventListener('click', goToToday);
 
-    // ---------- Auth: estado y flujos (Google y Email) ----------
+    // ---------- Auth ----------
     onAuthStateChanged(auth, async (user) => {
       isAuthReady = true;
       if (user) {
@@ -637,19 +636,16 @@
           userPanel.classList.remove('hidden');
           authButtons.classList.add('hidden');
           userEmailSpan.textContent = user.email || ("Usuari: " + user.uid);
-          statusMessage.textContent = `Conectado com ${user.email || user.uid}`;
+          statusMessage.textContent = `Conectado como ${user.email || user.uid}`;
         } else {
           userPanel.classList.add('hidden');
           authButtons.classList.remove('hidden');
           statusMessage.textContent = "Conectado como anónimo";
         }
-        // iniciar suscripción por el escamot actual
         subscribeAnnotations(escamotSelect.value);
       } else {
-        // cuando no hay user, iniciamos sesión anónima por defecto (para usar la app)
         try {
-          const result = await signInAnonymously(auth);
-          // user y subscripción manejados por onAuthStateChanged recursivamente
+          await signInAnonymously(auth);
         } catch (err) {
           console.error("Error al iniciar sesión anónima:", err);
           statusMessage.textContent = "Error de autenticación.";
@@ -657,47 +653,67 @@
       }
     });
 
-    // Google Sign-In (intenta link si usuario actual es anónimo para preservar datos)
+    // --- Google Sign-In con fallback a redirect y preservando datos anónimos
     googleSignInBtn.addEventListener('click', async () => {
-      const provider = new GoogleAuthProvider();
       try {
         if (auth.currentUser && auth.currentUser.isAnonymous) {
-          // guardamos todas las anotaciones del anon antes de intentar link
           const anonUid = auth.currentUser.uid;
           const anonData = await fetchAllAnnotationsForUserUid(anonUid);
           try {
-            // intentamos ligar provider al usuario anónimo (mantiene mismo uid)
-            await linkWithPopup(auth.currentUser, provider);
-            statusMessage.textContent = "Cuenta Google vinculada correctamente (datos preservados).";
+            // 1) Intentamos LINK con popup (mantiene mismo uid)
+            await linkWithPopup(auth.currentUser, googleProvider);
+            statusMessage.textContent = "Cuenta Google vinculada (datos preservados).";
           } catch (err) {
-            console.warn("Link con Google falló:", err);
-            // si no podemos linkear (por ejemplo la cuenta Google ya existe), iniciamos sesión con Google
-            const res = await signInWithPopup(auth, provider);
-            const newUid = res.user.uid;
-            if (newUid !== anonUid) {
-              // copiamos datos anon al nuevo usuario
-              await writeAnnotationsToUserUid(newUid, anonData);
-              statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
+            console.warn("linkWithPopup falló:", err?.code || err);
+            if (isPopupIssue(err)) {
+              // Guardamos backup y usamos redirect
+              localStorage.setItem(LS_KEYS.anonUid, anonUid);
+              localStorage.setItem(LS_KEYS.anonData, JSON.stringify(anonData));
+              statusMessage.textContent = "Ventana emergente bloqueada. Intentando vínculo por redirección…";
+              try {
+                await linkWithRedirect(auth.currentUser, googleProvider); // navegación
+              } catch (err2) {
+                // Si link falla (cuenta ya existe), intentamos sign-in con redirect y luego copiamos
+                console.warn("linkWithRedirect falló, probando signInWithRedirect:", err2?.code || err2);
+                await signInWithRedirect(auth, googleProvider); // navegación
+              }
+            } else {
+              // Si es p.ej. cuenta ya existe => iniciamos sesión con popup y copiamos
+              const res = await signInWithPopup(auth, googleProvider);
+              const newUid = res.user.uid;
+              if (newUid !== anonUid) {
+                await writeAnnotationsToUserUid(newUid, anonData);
+                statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
+              }
             }
           }
         } else {
-          // no anónimo => inicio normal
-          await signInWithPopup(auth, provider);
+          // Usuario ya autenticado (no anónimo)
+          try {
+            await signInWithPopup(auth, googleProvider);
+          } catch (err) {
+            if (isPopupIssue(err)) {
+              statusMessage.textContent = "Popup bloqueado. Continuando con redirección…";
+              await signInWithRedirect(auth, googleProvider); // navegación
+            } else {
+              throw err;
+            }
+          }
         }
       } catch (err) {
         console.error("Error Google sign-in:", err);
-        statusMessage.textContent = "Error en inicio con Google.";
+        statusMessage.textContent = humanAuthError(err);
       }
     });
 
-    // Email modal open
+    // --- Email modal
     emailOpenBtn.addEventListener('click', () => {
       emailModal.classList.remove('hidden');
       emailInput.value = ''; passwordInput.value = '';
     });
     emailCloseBtn.addEventListener('click', () => emailModal.classList.add('hidden'));
 
-    // Crear cuenta con Email (preferimos linkWithCredential si user es anónimo)
+    // Crear cuenta (link si es anónimo para preservar datos)
     emailCreateBtn.addEventListener('click', async () => {
       const email = (emailInput.value || '').trim();
       const password = (passwordInput.value || '').trim();
@@ -709,11 +725,10 @@
           const credential = EmailAuthProvider.credential(email, password);
           try {
             await linkWithCredential(auth.currentUser, credential);
-            statusMessage.textContent = "Cuenta de email vinculada correctamente (datos preservados).";
+            statusMessage.textContent = "Cuenta de email vinculada (datos preservados).";
           } catch (err) {
-            console.warn("Link with credential falló:", err);
+            console.warn("linkWithCredential falló:", err);
             if (err.code === 'auth/email-already-in-use') {
-              // la cuenta ya existe: nos logueamos y copiamos datos
               const res = await signInWithEmailAndPassword(auth, email, password);
               const newUid = res.user.uid;
               if (newUid !== anonUid) {
@@ -725,7 +740,6 @@
             }
           }
         } else {
-          // usuario no anónimo: creamos cuenta normalmente
           await createUserWithEmailAndPassword(auth, email, password);
         }
         emailModal.classList.add('hidden');
@@ -735,7 +749,7 @@
       }
     });
 
-    // Sign in with email (similar: si hay datos anónimos, los copiamos)
+    // Sign in con email
     emailSigninBtn.addEventListener('click', async () => {
       const email = (emailInput.value || '').trim();
       const password = (passwordInput.value || '').trim();
@@ -744,7 +758,6 @@
         if (auth.currentUser && auth.currentUser.isAnonymous) {
           const anonUid = auth.currentUser.uid;
           const anonData = await fetchAllAnnotationsForUserUid(anonUid);
-          // iniciamos sesión y luego copiamos los datos si hace falta
           const res = await signInWithEmailAndPassword(auth, email, password);
           const newUid = res.user.uid;
           if (newUid !== anonUid) {
@@ -761,24 +774,71 @@
       }
     });
 
-    // Sign out (cerrar sesión). Luego se re-iniciará sesión anónima para permitir uso.
+    // Sign out
     signOutBtn.addEventListener('click', async () => {
       try {
         await signOut(auth);
         statusMessage.textContent = "Sessió tancada. Iniciant com a anònim...";
-        // onAuthStateChanged detectará que no hay usuario y pedirá signInAnonymously
       } catch (err) {
         console.error("Error al cerrar sesion:", err);
       }
     });
 
-    // ---------- Init fallback: si no hay user tras X segundos, iniciar anónimo ----------
-    // (Normalmente onAuthStateChanged lo gestiona; esto es por seguridad)
+    // Fallback anónimo si algo raro tarda
     setTimeout(async () => {
       if (!isAuthReady) {
-        try { await signInAnonymously(auth); } catch(e){ /* swallow */ }
+        try { await signInAnonymously(auth); } catch(e){ /* no-op */ }
       }
     }, 1500);
+
+    // ---------- Helpers de auth (redirect + errores) ----------
+    function isPopupIssue(err){
+      const c = err?.code || '';
+      return c === 'auth/popup-blocked' ||
+             c === 'auth/popup-closed-by-user' ||
+             c === 'auth/cancelled-popup-request' ||
+             c === 'auth/operation-not-supported-in-this-environment';
+    }
+
+    function humanAuthError(err){
+      const code = err?.code || '';
+      if (code === 'auth/unauthorized-domain')
+        return "Dominio no autorizado en Firebase Auth > Settings > Authorized domains.";
+      if (code === 'auth/operation-not-allowed')
+        return "Proveedor Google no habilitado en Firebase Auth > Sign-in method.";
+      if (code === 'auth/network-request-failed')
+        return "Fallo de red. Revisa conexión o bloqueadores.";
+      if (code === 'auth/internal-error')
+        return "Error interno de autenticación.";
+      return "Error en inicio con Google.";
+    }
+
+    async function handleRedirectResultIfAny(){
+      try {
+        const res = await getRedirectResult(auth);
+        if (res && res.user) {
+          const newUid = res.user.uid;
+          const backupUid = localStorage.getItem(LS_KEYS.anonUid);
+          const json = localStorage.getItem(LS_KEYS.anonData);
+          if (json && backupUid && backupUid !== newUid) {
+            try {
+              const data = JSON.parse(json);
+              await writeAnnotationsToUserUid(newUid, data);
+              statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google (redirect).";
+            } catch(e){
+              console.warn("No se pudieron copiar datos tras redirect:", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("getRedirectResult error:", e?.code || e);
+        statusMessage.textContent = humanAuthError(e);
+      } finally {
+        // Limpia backups para no ocupar storage
+        localStorage.removeItem(LS_KEYS.anonUid);
+        localStorage.removeItem(LS_KEYS.anonData);
+      }
+    }
 
   </script>
 </body>
