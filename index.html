@@ -1,300 +1,865 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Mossos calendar by JPL</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
-  .day-box { min-height: 90px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:8px; text-align:center; cursor:pointer; transition:transform 0.1s ease-in-out; }
-  .day-box:hover { transform: scale(1.02); }
-  .day-box.faded { opacity:0.5; cursor:pointer; transform:none; }
-  .day-box.annotation-highlight { border-width:2px; border-color:#000; }
-  .day-number { font-weight:600; font-size:1.25rem; }
-  .day-shift { font-size:0.875rem; line-height:1; }
-  .day-annotation { font-size:0.75rem; font-weight:500; color:#4B5563; padding-left:4px; padding-right:4px; padding-bottom:6px; word-wrap:break-word; line-height:1.1; }
-  .button { padding:8px 16px; font-weight:500; border-radius:9999px; transition:background-color 0.15s ease-in-out; }
-  .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:50; }
-  .modal-content { background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,.1),0 10px 15px rgba(0,0,0,.1); width:90%; max-width:420px; text-align:center; }
-  .modal-button { display:block; width:100%; padding:12px; margin-top:8px; border-radius:8px; background:#E5E7EB; color:#1F2937; font-weight:600; transition:background-color .15s; }
-  .modal-button:hover { background:#D1D5DB; }
-  .input-group { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-  .input-group label { font-weight:500; color:#4B5563; }
-  .input-group input, .input-group textarea { width:45%; padding:8px; border-radius:8px; border:1px solid #D1D5DB; text-align:center; }
-  .total-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #E5E7EB; }
-  .total-item:last-child { border-bottom:none; }
-  .total-item span:first-child { font-weight:500; color:#4B5563; }
-  .total-item span:last-child { font-weight:600; color:#1F2937; }
-  @media (max-width:640px) {
-    .day-box { min-height:80px; padding:6px; }
-    .day-number { font-size:1.1rem; }
-    .day-shift { font-size:0.75rem; }
-    .day-annotation { font-size:0.65rem; padding-bottom:2px; }
-    h1 { font-size:1.75rem; }
-  }
-  .user-id { font-size:0.75rem; color:#6B7280; margin-top:1rem; text-align:center; word-break:break-all; }
-  .status-message { margin-top:0.5rem; font-size:0.875rem; color:#4B5563; text-align:center; }
-  .auth-btn { padding:6px 10px; border-radius:8px; font-weight:600; border:1px solid #E5E7EB; background:white; }
-  .small-muted { font-size:0.8rem; color:#6B7280; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mossos calendar by JPL</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
+    .day-box { min-height: 90px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:8px; text-align:center; cursor:pointer; transition:transform 0.1s ease-in-out; }
+    .day-box:hover { transform: scale(1.02); }
+    .day-box.faded { opacity:0.5; cursor:pointer; transform:none; }
+    .day-box.annotation-highlight { border-width:2px; border-color:#000; }
+    .day-number { font-weight:600; font-size:1.25rem; }
+    .day-shift { font-size:0.875rem; line-height:1; }
+    .day-annotation { font-size:0.75rem; font-weight:500; color:#4B5563; padding-left:4px; padding-right:4px; padding-bottom:6px; word-wrap:break-word; line-height:1.1; }
+    .button { padding:8px 16px; font-weight:500; border-radius:9999px; transition:background-color 0.15s ease-in-out; }
+    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:50; }
+    .modal-content { background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,.1),0 10px 15px rgba(0,0,0,.1); width:90%; max-width:420px; text-align:center; }
+    .modal-button { display:block; width:100%; padding:12px; margin-top:8px; border-radius:8px; background:#E5E7EB; color:#1F2937; font-weight:600; transition:background-color .15s; }
+    .modal-button:hover { background:#D1D5DB; }
+    .input-group { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .input-group label { font-weight:500; color:#4B5563; }
+    .input-group input, .input-group textarea { width:45%; padding:8px; border-radius:8px; border:1px solid #D1D5DB; text-align:center; }
+    .total-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #E5E7EB; }
+    .total-item:last-child { border-bottom:none; }
+    .total-item span:first-child { font-weight:500; color:#4B5563; }
+    .total-item span:last-child { font-weight:600; color:#1F2937; }
+    @media (max-width:640px) {
+      .day-box { min-height:80px; padding:6px; }
+      .day-number { font-size:1.1rem; }
+      .day-shift { font-size:0.75rem; }
+      .day-annotation { font-size:0.65rem; padding-bottom:2px; }
+      h1 { font-size:1.75rem; }
+    }
+    .user-id { font-size:0.75rem; color:#6B7280; margin-top:1rem; text-align:center; word-break:break-all; }
+    .status-message { margin-top:0.5rem; font-size:0.875rem; color:#4B5563; text-align:center; }
+    .auth-btn { padding:6px 10px; border-radius:8px; font-weight:600; border:1px solid #E5E7EB; background:white; }
+    .small-muted { font-size:0.8rem; color:#6B7280; }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
 
-<div class="w-full max-w-4xl bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
-  <div class="flex items-start justify-between mb-4">
-    <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Mossos calendar by JPL</h1>
-      <div class="small-muted">Gestiona les teves anotacions i hores</div>
-    </div>
-    <div class="flex flex-col items-end space-y-2">
-      <div id="auth-buttons" class="flex space-x-2">
-        <button id="google-signin-btn" class="auth-btn">Google</button>
-        <button id="email-open-btn" class="auth-btn">Email</button>
+  <div class="w-full max-w-4xl bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Mossos calendar by JPL</h1>
+        <div class="small-muted">Gestiona les teves anotacions i hores</div>
       </div>
-      <div id="user-panel" class="hidden text-right">
-        <div class="text-sm text-gray-700" id="user-email"></div>
-        <div class="flex items-center space-x-2">
-          <button id="sign-out-btn" class="button bg-red-500 hover:bg-red-600 text-white">Tancar sessió</button>
+
+      <!-- Auth panel -->
+      <div class="flex flex-col items-end space-y-2">
+        <div id="auth-buttons" class="flex space-x-2">
+          <button id="google-signin-btn" class="auth-btn">Google</button>
+          <button id="email-open-btn" class="auth-btn">Email</button>
+        </div>
+        <div id="user-panel" class="hidden text-right">
+          <div class="text-sm text-gray-700" id="user-email"></div>
+          <div class="flex items-center space-x-2">
+            <button id="sign-out-btn" class="button bg-red-500 hover:bg-red-600 text-white">Tancar sessió</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Selección de escamot, mes y año -->
-  <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
-    <div class="flex-grow w-full md:w-auto">
-      <label for="escamot-select" class="block text-sm font-medium text-gray-700 mb-1">Selecciona el teu Escamot</label>
-      <select id="escamot-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2">
-        <option value="1">Escamot 1</option>
-        <option value="2">Escamot 2</option>
-        <option value="3">Escamot 3</option>
-        <option value="4">Escamot 4</option>
-        <option value="5">Escamot 5</option>
-      </select>
-    </div>
-
-    <div class="flex flex-grow w-full md:w-auto mt-4 md:mt-0 space-x-2">
-      <div class="flex-1">
-        <label for="month-select" class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
-        <select id="month-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+    <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
+      <div class="flex-grow w-full md:w-auto">
+        <label for="escamot-select" class="block text-sm font-medium text-gray-700 mb-1">Selecciona el teu Escamot</label>
+        <select id="escamot-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2">
+          <option value="1">Escamot 1</option>
+          <option value="2">Escamot 2</option>
+          <option value="3">Escamot 3</option>
+          <option value="4">Escamot 4</option>
+          <option value="5">Escamot 5</option>
+        </select>
       </div>
-      <div class="flex-1">
-        <label for="year-select" class="block text-sm font-medium text-gray-700 mb-1">Any</label>
-        <select id="year-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+
+      <div class="flex flex-grow w-full md:w-auto mt-4 md:mt-0 space-x-2">
+        <div class="flex-1">
+          <label for="month-select" class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+          <select id="month-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+        </div>
+        <div class="flex-1">
+          <label for="year-select" class="block text-sm font-medium text-gray-700 mb-1">Any</label>
+          <select id="year-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between mb-4 items-center">
+      <button id="prev-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">&lt; Mes Anterior</button>
+      <div class="flex items-center space-x-3">
+        <button id="today-btn" class="button bg-indigo-600 hover:bg-indigo-700 text-white">Avui</button>
+        <span id="today-date" class="text-sm sm:text-base text-gray-700 font-medium"></span>
+      </div>
+      <button id="next-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">Mes Següent &gt;</button>
+    </div>
+
+    <div id="calendar-container">
+      <div class="grid grid-cols-7 text-center font-bold text-gray-700 bg-gray-200 rounded-t-lg p-2">
+        <div>Dill</div><div>Dim</div><div>Dmc</div><div>Dij</div><div>Div</div><div>Dis</div><div>Diu</div>
+      </div>
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1 p-1 sm:p-2 bg-white rounded-b-lg border border-gray-200"></div>
+    </div>
+
+    <p class="status-message" id="status-message">Conectando...</p>
+    <p class="user-id" id="user-id">ID de Usuario: Cargando...</p>
+
+    <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <h2 id="summary-title" class="text-xl font-bold text-gray-800 mb-4">Resum Anual</h2>
+      <div id="totals-display">
+        <div class="total-item"><span>Total d'hores planificades:</span><span id="total-planned-hours">0 h</span></div>
+        <div class="total-item"><span>Total d'hores treballades:</span><span id="total-worked-hours">0 h</span></div>
+        <div class="total-item"><span>Total d'hores que s'han de treballar a l'any:</span><span id="total-annual-hours">1680 h</span></div>
+        <div class="total-item"><span>Total de vacances:</span><span id="total-vacances-hours">0 h</span></div>
+        <div class="total-item"><span>Total de dies treballats:</span><span id="total-worked-days">0 dies</span></div>
+        <div class="total-item"><span>Total d'hores de perllongament:</span><span id="total-perllongament-hours">0 h 0 m</span></div>
+        <div class="total-item"><span>Romanent per fer any:</span><span id="total-romanent-per-fer-hours" class="font-bold">0 h 0 m</span></div>
+        <div class="total-item"><span>Romanent fet any:</span><span id="total-romanent-fet-hours" class="font-bold">0 h 0 m</span></div>
+        <div class="total-item"><span>Total de judicis:</span><span id="total-judicis">0</span></div>
       </div>
     </div>
   </div>
 
-  <div class="flex justify-between mb-4 items-center">
-    <button id="prev-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">&lt; Mes Anterior</button>
-    <div class="flex items-center space-x-3">
-      <button id="today-btn" class="button bg-indigo-600 hover:bg-indigo-700 text-white">Avui</button>
-      <span id="today-date" class="text-sm sm:text-base text-gray-700 font-medium"></span>
-    </div>
-    <button id="next-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">Mes Següent &gt;</button>
-  </div>
-
-  <div id="calendar-container">
-    <div class="grid grid-cols-7 text-center font-bold text-gray-700 bg-gray-200 rounded-t-lg p-2">
-      <div>Dill</div><div>Dim</div><div>Dmc</div><div>Dij</div><div>Div</div><div>Dis</div><div>Diu</div>
-    </div>
-    <div id="calendar-grid" class="grid grid-cols-7 gap-1 p-1 sm:p-2 bg-white rounded-b-lg border border-gray-200"></div>
-  </div>
-
-  <p class="status-message" id="status-message">Conectando...</p>
-  <p class="user-id" id="user-id">ID de Usuario: Cargando...</p>
-
-  <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-    <h2 id="summary-title" class="text-xl font-bold text-gray-800 mb-4">Resum Anual</h2>
-    <div id="totals-display">
-      <div class="total-item"><span>Total d'hores planificades:</span><span id="total-planned-hours">0 h</span></div>
-      <div class="total-item"><span>Total d'hores treballades:</span><span id="total-worked-hours">0 h</span></div>
-      <div class="total-item"><span>Total d'hores que s'han de treballar a l'any:</span><span id="total-annual-hours">1680 h</span></div>
-      <div class="total-item"><span>Total de vacances:</span><span id="total-vacances-hours">0 h</span></div>
-      <div class="total-item"><span>Total de dies treballats:</span><span id="total-worked-days">0 dies</span></div>
-      <div class="total-item"><span>Total d'hores de perllongament:</span><span id="total-perllongament-hours">0 h 0 m</span></div>
-      <div class="total-item"><span>Romanent per fer any:</span><span id="total-romanent-per-fer-hours" class="font-bold">0 h</span></div>
+  <!-- Modal anotació -->
+  <div id="annotation-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Afegeix una anotació</h2>
+      <div id="annotation-options" class="flex flex-col space-y-2">
+        <button class="modal-button" data-annotation="Vacances">Vacances</button>
+        <button class="modal-button" data-annotation="Perllongament">Perllongament</button>
+        <button class="modal-button" data-annotation="Tir">Tir</button>
+        <button class="modal-button" data-annotation="Formació">Formació</button>
+        <button class="modal-button" data-annotation="Romanent">Romanent</button>
+        <button class="modal-button" data-annotation="AP">AP</button>
+        <button class="modal-button" data-annotation="Judici">Judici</button>
+      </div>
+      <button id="clear-annotation-btn" class="modal-button mt-4 bg-red-500 text-white hover:bg-red-600">Eliminar Anotació</button>
+      <button id="close-modal-btn" class="modal-button mt-4 bg-gray-300 text-gray-800 hover:bg-gray-400">Tanca</button>
     </div>
   </div>
-</div>
 
-<!-- Modal anotaciones -->
-<div id="annotation-modal" class="hidden modal-overlay">
-  <div class="modal-content">
-    <h3 class="text-lg font-bold mb-4">Afegir / Editar Anotació</h3>
-    <textarea id="annotation-text" rows="4" class="w-full border p-2 rounded-md mb-4"></textarea>
-    <button id="save-annotation-btn" class="modal-button bg-indigo-600 text-white">Guardar</button>
-    <button id="close-annotation-btn" class="modal-button">Tancar</button>
+  <!-- Modal hores -->
+  <div id="time-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 id="time-modal-title" class="text-xl font-bold mb-4 text-gray-800">Afegeix hores</h2>
+      <div class="input-group">
+        <label for="time-hours-input">Hores:</label>
+        <input type="number" id="time-hours-input" value="0" min="0" class="rounded-md border-gray-300 p-2">
+      </div>
+      <div class="input-group">
+        <label for="time-minutes-input">Minuts:</label>
+        <input type="number" id="time-minutes-input" value="0" min="0" max="59" class="rounded-md border-gray-300 p-2">
+      </div>
+      <div id="time-modal-motivo-container" class="input-group flex-col items-start w-full">
+        <label for="time-motivo-input" class="mb-2">Motiu:</label>
+        <textarea id="time-motivo-input" rows="2" class="w-full rounded-md border-gray-300 p-2 resize-none text-center"></textarea>
+      </div>
+      <button id="save-time-btn" class="modal-button bg-green-500 text-white hover:bg-green-600">Desa</button>
+      <button id="cancel-time-btn" class="modal-button mt-4 bg-gray-300 text-gray-800 hover:bg-gray-400">Cancel·la</button>
+    </div>
   </div>
-</div>
 
-<!-- Firebase & Google Auth scripts -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
-import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, linkWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+  <!-- Modal Email (signup/login) -->
+  <div id="email-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Email - Inicia o crea compte</h2>
+      <div class="mb-2 text-sm text-left">Introdueix email i contrasenya. Pots crear compte o entrar. Si tens dades com a anònim, el sistema intentarà associar-les al teu compte.</div>
+      <div class="input-group">
+        <label for="email-input">Email:</label>
+        <input type="email" id="email-input" value="" class="rounded-md border-gray-300 p-2">
+      </div>
+      <div class="input-group">
+        <label for="password-input">Contrasenya:</label>
+        <input type="password" id="password-input" value="" class="rounded-md border-gray-300 p-2">
+      </div>
+      <button id="email-create-btn" class="modal-button bg-indigo-600 text-white">Crear compte (link)</button>
+      <button id="email-signin-btn" class="modal-button bg-green-500 text-white">Entrar</button>
+      <button id="email-close-btn" class="modal-button mt-2 bg-gray-300 text-gray-800">Tanca</button>
+    </div>
+  </div>
 
-const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROJECT.firebaseapp.com",
-  projectId: "TU_PROJECT",
-  storageBucket: "TU_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInAnonymously,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      GoogleAuthProvider,
+      signOut,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      linkWithPopup,
+      linkWithRedirect,
+      linkWithCredential,
+      EmailAuthProvider
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      deleteDoc,
+      onSnapshot,
+      collection,
+      getDocs,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const statusMessage = document.getElementById('status-message');
-const userIdDisplay = document.getElementById('user-id');
-const userEmailDisplay = document.getElementById('user-email');
-const authButtons = document.getElementById('auth-buttons');
-const userPanel = document.getElementById('user-panel');
+    // ====== CONFIGURA AQUI >>> Sustituye por tus credenciales de Firebase <<<< ======
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfwMOIDxQhFRkuMupsbSzGf5UKuRqe1aA",
+      authDomain: "mossoscalendar.firebaseapp.com",
+      projectId: "mossoscalendar",
+      storageBucket: "mossoscalendar.appspot.com",
+      messagingSenderId: "357620337746",
+      appId: "1:357620337746:web:46a8f42ad9c6fdafe3e38b",
+      measurementId: "G-B15S9RY6B9"
+    };
 
-let annotationsData = {}; // Local cache de anotaciones
-let currentDaySelected = null;
+    if (!firebaseConfig || !firebaseConfig.apiKey) {
+      alert("Por favor pega tu firebaseConfig en el archivo antes de usar la app.");
+    }
 
-// --- Funciones Firebase ---
-async function fetchAllAnnotationsForUserUid(uid) {
-  const docSnap = await getDoc(doc(db, 'annotations', uid));
-  return docSnap.exists() ? docSnap.data() : {};
-}
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    auth.useDeviceLanguage?.();
+    const appId = "mossos_calendar_by_jpl";
 
-async function writeAnnotationsToUserUid(uid, data) {
-  await setDoc(doc(db, 'annotations', uid), data);
-}
+    // --- Google provider (definido una vez) + preferencia popup con fallback a redirect
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: "select_account" });
 
-// --- Auth ---
-async function ensureAnonymousUser() {
-  if (!auth.currentUser) {
-    await signInAnonymously(auth);
-  }
-}
+    // LocalStorage keys para preservar datos si usamos redirect
+    const LS_KEYS = {
+      anonData: "mc_tmp_anonData",
+      anonUid: "mc_tmp_anonUid"
+    };
 
-document.getElementById('google-signin-btn').addEventListener('click', async () => {
-  const provider = new GoogleAuthProvider();
-  try {
-    if (auth.currentUser && auth.currentUser.isAnonymous) {
-      const anonUid = auth.currentUser.uid;
-      const anonData = await fetchAllAnnotationsForUserUid(anonUid);
+    // UI elements
+    const escamotSelect = document.getElementById('escamot-select');
+    const monthSelect = document.getElementById('month-select');
+    const yearSelect = document.getElementById('year-select');
+    const calendarGrid = document.getElementById('calendar-grid');
+    const prevMonthBtn = document.getElementById('prev-month-btn');
+    const todayBtn = document.getElementById('today-btn');
+    const nextMonthBtn = document.getElementById('next-month-btn');
+    const annotationModal = document.getElementById('annotation-modal');
+    const annotationOptions = document.getElementById('annotation-options');
+    const clearAnnotationBtn = document.getElementById('clear-annotation-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const timeModal = document.getElementById('time-modal');
+    const timeModalTitle = document.getElementById('time-modal-title');
+    const timeModalMotivoContainer = document.getElementById('time-modal-motivo-container');
+    const timeHoursInput = document.getElementById('time-hours-input');
+    const timeMinutesInput = document.getElementById('time-minutes-input');
+    const timeMotivoInput = document.getElementById('time-motivo-input');
+    const saveTimeBtn = document.getElementById('save-time-btn');
+    const cancelTimeBtn = document.getElementById('cancel-time-btn');
+    const totalPlannedHoursSpan = document.getElementById('total-planned-hours');
+    const totalWorkedHoursSpan = document.getElementById('total-worked-hours');
+    const totalVacancesHoursSpan = document.getElementById('total-vacances-hours');
+    const totalWorkedDaysSpan = document.getElementById('total-worked-days');
+    const totalPerllongamentHoursSpan = document.getElementById('total-perllongament-hours');
+    const totalRomanentPerFerHoursSpan = document.getElementById('total-romanent-per-fer-hours');
+    const totalRomanentFetHoursSpan = document.getElementById('total-romanent-fet-hours');
+    const totalJudicisSpan = document.getElementById('total-judicis');
+    const summaryTitle = document.getElementById('summary-title');
+    const userIdDisplay = document.getElementById('user-id');
+    const statusMessage = document.getElementById('status-message');
+    const todayDateSpan = document.getElementById('today-date');
+
+    // Auth UI elements
+    const googleSignInBtn = document.getElementById('google-signin-btn');
+    const emailOpenBtn = document.getElementById('email-open-btn');
+    const userPanel = document.getElementById('user-panel');
+    const authButtons = document.getElementById('auth-buttons');
+    const userEmailSpan = document.getElementById('user-email');
+    const signOutBtn = document.getElementById('sign-out-btn');
+    const emailModal = document.getElementById('email-modal');
+    const emailInput = document.getElementById('email-input');
+    const passwordInput = document.getElementById('password-input');
+    const emailCreateBtn = document.getElementById('email-create-btn');
+    const emailSigninBtn = document.getElementById('email-signin-btn');
+    const emailCloseBtn = document.getElementById('email-close-btn');
+
+    // state
+    let selectedDayDate = null;
+    let currentAnnotationType = null;
+    let annotations = {}; // mapa dateKey -> annotationData
+    let userId = null;
+    let unsubscribeAnnotations = null;
+    let isAuthReady = false;
+
+    // calendar helpers & config
+    const months = ["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
+    const ESCAMOT_BASE_WEEK = {1:3,2:2,3:1,4:5,5:4};
+    const SHIFT_ABBREVIATIONS = {'Festa':'F','Matins':'M','Dia':'D','Tardes':'T','Nits':'N','Tarda/Nit':'TN'};
+    const ANNOTATION_ABBREVIATIONS = {'Vacances':'VAC','Perllongament':'Per','Tir':'Tir','Formació':'Formació','Romanent':'Rom','AP':'AP','Judici':'J'};
+    const ANNOTATION_FULL_NAMES = {'Vacances':'Vacances','Perllongament':'Perllongament','Tir':'Tir','Formació':'Formació','Romanent':'Romanent','AP':'AP','Judici':'Judici'};
+    const SHIFT_HOURS = {'Matins':8.5,'Dia':12,'Tardes':8.5,'Nits':8.5,'Tarda/Nit':12,'Formació':8.5,'AP':8.5,'Tir':8.5,'Romanent':8.5,'Judici':8.5};
+    const ANNUAL_WORK_HOURS = 1680;
+    const VACATION_HOURS = 180;
+    const ANCHOR_MONDAY = new Date('2025-01-27T00:00:00');
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+    function diffDays(a,b){ const utcA=Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()); const utcB=Date.UTC(b.getFullYear(),b.getMonth(),b.getDate()); return Math.floor((utcA-utcB)/MS_PER_DAY); }
+    function weekIndexForDate(date, escamot){ const days = diffDays(date, ANCHOR_MONDAY); const offsetWeeks = Math.floor(days/7); const base = ESCAMOT_BASE_WEEK[escamot] || 1; const idx = ((base - 1 + offsetWeeks) % 5 + 5) % 5; return idx + 1; }
+    function getQ5Shift(date, escamot){ const weekIdx = weekIndexForDate(date, escamot); const day=date.getDay(); const isWeekend = day===0||day===6; switch(weekIdx){ case 1: case 4: return 'Festa'; case 2: return isWeekend ? 'Festa' : 'Tardes'; case 3: return isWeekend ? 'Tarda/Nit' : 'Nits'; case 5: return isWeekend ? 'Dia' : 'Matins'; default: return 'Festa'; } }
+    function getShiftColors(shift){ switch(shift){ case 'Festa': return 'bg-green-200 border-green-300'; case 'Matins': case 'Dia': return 'bg-blue-200 border-blue-300'; case 'Tardes': return 'bg-yellow-200 border-yellow-300'; case 'Nits': case 'Tarda/Nit': return 'bg-red-200 border-red-300'; default: return 'bg-gray-200 border-gray-300'; } }
+
+    // ---------- Firestore: rutas con escamot ----------
+    async function saveAnnotation(dateKey, annotationData) {
+      if (!userId) { statusMessage.textContent = "No autenticado aún."; return; }
+      const escamot = escamotSelect.value;
+      const docRef = doc(db, 'artifacts', appId, 'users', userId, 'escamots', escamot, 'annotations', dateKey);
       try {
-        await linkWithPopup(auth.currentUser, provider);
-        statusMessage.textContent = "Cuenta Google vinculada correctamente (datos preservados).";
+        await setDoc(docRef, annotationData);
+        statusMessage.textContent = "Anotación guardada.";
       } catch (err) {
+        console.error("Error saving annotation:", err);
+        statusMessage.textContent = "Error al guardar la anotación.";
+      }
+    }
+
+    async function deleteAnnotationForEscamot(dateKey) {
+      if (!userId) { statusMessage.textContent = "No autenticado aún."; return; }
+      const escamot = escamotSelect.value;
+      const docRef = doc(db, 'artifacts', appId, 'users', userId, 'escamots', escamot, 'annotations', dateKey);
+      try {
+        await deleteDoc(docRef);
+        statusMessage.textContent = "Anotación eliminada.";
+      } catch (err) {
+        console.error("Error deleting annotation:", err);
+        statusMessage.textContent = "Error al eliminar la anotación.";
+      }
+    }
+
+    function subscribeAnnotations(escamot) {
+      if (!userId) return;
+      if (unsubscribeAnnotations) unsubscribeAnnotations();
+      const colRef = collection(db, 'artifacts', appId, 'users', userId, 'escamots', escamot, 'annotations');
+      unsubscribeAnnotations = onSnapshot(colRef, (snapshot) => {
+        annotations = {};
+        snapshot.forEach(d => { annotations[d.id] = d.data(); });
+        renderCalendar();
+      }, (error) => {
+        console.error("Firestore error:", error);
+        statusMessage.textContent = "Error al conectar con la base de datos.";
+      });
+    }
+
+    async function fetchAllAnnotationsForUserUid(uid) {
+      const data = {};
+      for (let esc = 1; esc <= 5; esc++) {
+        const escStr = String(esc);
+        data[escStr] = {};
+        const colRef = collection(db, 'artifacts', appId, 'users', uid, 'escamots', escStr, 'annotations');
+        try {
+          const snapshot = await getDocs(colRef);
+          snapshot.forEach(d => { data[escStr][d.id] = d.data(); });
+        } catch(err) {
+          console.warn("No se pudieron leer anotaciones para uid", uid, "escamot", escStr, err);
+        }
+      }
+      return data;
+    }
+
+    async function writeAnnotationsToUserUid(destUid, annotationsData) {
+      for (const esc in annotationsData) {
+        for (const dateKey in annotationsData[esc]) {
+          const docRef = doc(db, 'artifacts', appId, 'users', destUid, 'escamots', esc, 'annotations', dateKey);
+          try {
+            const existing = await getDoc(docRef);
+            if (!existing.exists()) {
+              await setDoc(docRef, annotationsData[esc][dateKey]);
+            }
+          } catch (err) {
+            console.error("Error writing annotation to dest:", err);
+          }
+        }
+      }
+    }
+
+    function populateMonthYearSelects(){
+      monthSelect.innerHTML = months.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+      const currentYear = new Date().getFullYear();
+      yearSelect.innerHTML = '';
+      for (let i = currentYear-5; i<=currentYear+5; i++){
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = i;
+        yearSelect.appendChild(opt);
+      }
+    }
+
+    function renderCalendar(){
+      const year = parseInt(yearSelect.value);
+      const month = parseInt(monthSelect.value);
+      if (isNaN(year) || isNaN(month)) return;
+      calendarGrid.innerHTML = '';
+      const firstDayDate = new Date(year, month, 1);
+      const lastDayDate = new Date(year, month+1, 0);
+      const startDayOffset = firstDayDate.getDay() === 0 ? 6 : firstDayDate.getDay()-1;
+      const startDate = new Date(firstDayDate); startDate.setDate(startDate.getDate()-startDayOffset);
+      const endDayOffset = lastDayDate.getDay() === 0 ? 0 : 7 - lastDayDate.getDay();
+      const endDate = new Date(lastDayDate); endDate.setDate(endDate.getDate()+endDayOffset);
+
+      let currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const day = currentDate.getDate();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+        const escamot = parseInt(escamotSelect.value);
+        const shift = getQ5Shift(currentDate, escamot);
+        const abbreviatedShift = SHIFT_ABBREVIATIONS[shift] || shift;
+        const isToday = currentDate.getFullYear() === new Date().getFullYear()
+          && currentDate.getMonth() === new Date().getMonth()
+          && currentDate.getDate() === new Date().getDate();
+
+        const dateKey = currentDate.toISOString().split('T')[0];
+        const annotation = annotations[dateKey] || null;
+
+        const dayBox = document.createElement('div');
+        dayBox.dataset.date = dateKey;
+        dayBox.className = `day-box rounded-lg p-2 text-center shadow-sm border ${getShiftColors(shift)}`;
+        if (currentMonth !== month || currentYear !== year) dayBox.classList.add('faded');
+        let textClasses = isToday ? 'text-red-500 font-bold' : '';
+
+        let annotationTextFull = ''; let annotationTextAbbrev = ''; let hoursMinutesText = '';
+        if (annotation) {
+          const t = annotation.type;
+          annotationTextFull = ANNOTATION_FULL_NAMES[t] || t;
+          annotationTextAbbrev = ANNOTATION_ABBREVIATIONS[t] || t;
+          switch(t) {
+            case 'Vacances':
+              dayBox.className = 'day-box rounded-lg p-2 text-center shadow-sm border bg-purple-400 border-purple-600';
+              textClasses = 'text-white font-bold';
+              break;
+            case 'Perllongament':
+            case 'Romanent':
+              dayBox.classList.add('annotation-highlight');
+              if (annotation.motivo) dayBox.title = annotation.motivo;
+              if (annotation.hours !== undefined && annotation.minutes !== undefined) hoursMinutesText = `<br>${annotation.hours}h ${annotation.minutes}m`;
+              break;
+            case 'AP':
+              dayBox.className = 'day-box rounded-lg p-2 text-center shadow-sm border bg-fuchsia-400 border-fuchsia-600';
+              textClasses = 'text-white font-bold';
+              break;
+            case 'Judici':
+              dayBox.className = 'day-box rounded-lg p-2 text-center shadow-sm border bg-yellow-500 border-yellow-700';
+              textClasses = 'text-white font-bold';
+              break;
+          }
+        }
+
+        dayBox.innerHTML = `
+          <span class="day-number ${textClasses}">${day}</span>
+          <span class="day-shift ${textClasses}">${abbreviatedShift}</span>
+          <span class="day-annotation hidden sm:inline ${textClasses}">${annotationTextFull}${hoursMinutesText}</span>
+          <span class="day-annotation inline sm:hidden ${textClasses}">${annotationTextAbbrev}${hoursMinutesText}</span>
+        `;
+        calendarGrid.appendChild(dayBox);
+        currentDate.setDate(currentDate.getDate()+1);
+      }
+
+      calculateTotals();
+    }
+
+    function updateMonth(offset){
+      let y = parseInt(yearSelect.value); let m = parseInt(monthSelect.value);
+      const newDate = new Date(y, m + offset, 1);
+      yearSelect.value = newDate.getFullYear(); monthSelect.value = newDate.getMonth();
+      renderCalendar();
+    }
+
+    function goToToday(){
+      const t = new Date();
+      monthSelect.value = t.getMonth(); yearSelect.value = t.getFullYear();
+      renderCalendar();
+    }
+
+    function updateTodayDateDisplay() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2,'0');
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const yy = String(now.getFullYear()).slice(-2);
+      todayDateSpan.textContent = `${dd}/${mm}/${yy}`;
+    }
+
+    function calculateTotals(){
+      const escamot = parseInt(escamotSelect.value);
+      let totalPlannedHoursFixed = 0; let totalWorkedDaysFixed = 0;
+      const startDateFixed = new Date('2025-02-01'); const endDateFixed = new Date('2026-01-31');
+      const dayMs = 1000 * 60 * 60 * 24;
+      let currentDateFixed = new Date(startDateFixed);
+      while (currentDateFixed.getTime() <= endDateFixed.getTime()){
+        const shift = getQ5Shift(currentDateFixed, escamot);
+        if (shift !== 'Festa') { totalPlannedHoursFixed += (SHIFT_HOURS[shift] || 0); totalWorkedDaysFixed++; }
+        currentDateFixed.setTime(currentDateFixed.getTime() + dayMs);
+      }
+
+      let totalPerllongamentHours=0, totalPerllongamentMinutes=0, totalRomanentHours=0, totalRomanentMinutes=0, totalJuicios=0;
+      for (const d in annotations){
+        const a = annotations[d];
+        if (!a || !a.type) continue;
+        if (a.type === 'Perllongament'){ totalPerllongamentHours += a.hours || 0; totalPerllongamentMinutes += a.minutes || 0; }
+        if (a.type === 'Romanent'){ totalRomanentHours += a.hours || 0; totalRomanentMinutes += a.minutes || 0; }
+        if (a.type === 'Judici') totalJuicios++;
+      }
+      totalPerllongamentHours += Math.floor(totalPerllongamentMinutes / 60); totalPerllongamentMinutes %= 60;
+      totalRomanentHours += Math.floor(totalRomanentMinutes / 60); totalRomanentMinutes %= 60;
+      const totalWorkedHours = totalPlannedHoursFixed - VACATION_HOURS;
+
+      const plannedMinutes = Math.round(totalPlannedHoursFixed * 60);
+      totalPlannedHoursSpan.textContent = `${Math.floor(plannedMinutes/60)} h ${(plannedMinutes%60).toString().padStart(2,'0')} m`;
+      const workedMinutes = Math.round(totalWorkedHours * 60);
+      totalWorkedHoursSpan.textContent = `${Math.floor(workedMinutes/60)} h ${(workedMinutes%60).toString().padStart(2,'0')} m`;
+      totalVacancesHoursSpan.textContent = `${VACATION_HOURS} h 00 m`;
+      totalWorkedDaysSpan.textContent = `${totalWorkedDaysFixed} dies`;
+      totalPerllongamentHoursSpan.textContent = `${totalPerllongamentHours} h ${totalPerllongamentMinutes.toString().padStart(2,'0')} m`;
+      totalRomanentFetHoursSpan.textContent = `${totalRomanentHours} h ${totalRomanentMinutes.toString().padStart(2,'0')} m`;
+      totalRomanentFetHoursSpan.classList.add('text-blue-500');
+
+      const netBalanceMinutes = Math.round((totalWorkedHours - ANNUAL_WORK_HOURS) * 60);
+      if (netBalanceMinutes < 0) {
+        const displayRomanentPerFerMinutes = Math.abs(netBalanceMinutes);
+        const h = Math.floor(displayRomanentPerFerMinutes/60);
+        const m = (displayRomanentPerFerMinutes%60).toString().padStart(2,'0');
+        totalRomanentPerFerHoursSpan.textContent = `${h} h ${m} m`;
+        totalRomanentPerFerHoursSpan.classList.add('text-red-500');
+      } else {
+        totalRomanentPerFerHoursSpan.textContent = `0 h 00 m`;
+        totalRomanentPerFerHoursSpan.classList.remove('text-red-500');
+      }
+
+      totalJudicisSpan.textContent = totalJuicios;
+      summaryTitle.textContent = `Resum Anual (1 de Febrer de 2025 - 31 de Gener de 2026)`;
+    }
+
+    // ---------- UI events ----------
+    calendarGrid.addEventListener('click', (event) => {
+      const dayBox = event.target.closest('.day-box');
+      if (!dayBox || !dayBox.dataset.date) return;
+      if (dayBox.classList.contains('faded')) {
+        const clickedDate = new Date(dayBox.dataset.date);
+        const currentMonth = parseInt(monthSelect.value);
+        const currentYear = parseInt(yearSelect.value);
+        const firstDayOfCurrentMonth = new Date(currentYear, currentMonth, 1);
+        if (clickedDate.getTime() > firstDayOfCurrentMonth.getTime()) updateMonth(1); else updateMonth(-1);
+        return;
+      }
+      selectedDayDate = dayBox.dataset.date;
+      annotationModal.classList.remove('hidden');
+    });
+
+    annotationOptions.addEventListener('click', (event) => {
+      const annotation = event.target.dataset.annotation;
+      if (!annotation) return;
+      if (annotation === 'Perllongament' || annotation === 'Romanent') {
+        annotationModal.classList.add('hidden');
+        timeModal.classList.remove('hidden');
+        currentAnnotationType = annotation;
+        timeModalTitle.textContent = `Afegeix hores de ${annotation}`;
+        timeModalMotivoContainer.classList.remove('hidden');
+        const existing = annotations[selectedDayDate];
+        if (existing && existing.type === annotation) {
+          timeHoursInput.value = existing.hours || 0;
+          timeMinutesInput.value = existing.minutes || 0;
+          timeMotivoInput.value = existing.motivo || '';
+        } else {
+          timeHoursInput.value = 0; timeMinutesInput.value = 0; timeMotivoInput.value = '';
+        }
+      } else {
+        saveAnnotation(selectedDayDate, { type: annotation });
+        annotationModal.classList.add('hidden');
+      }
+    });
+
+    clearAnnotationBtn.addEventListener('click', () => {
+      deleteAnnotationForEscamot(selectedDayDate);
+      annotationModal.classList.add('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', () => annotationModal.classList.add('hidden'));
+
+    saveTimeBtn.addEventListener('click', () => {
+      const hours = parseInt(timeHoursInput.value) || 0;
+      const minutes = parseInt(timeMinutesInput.value) || 0;
+      const motivo = (timeMotivoInput.value || '').trim();
+      if (hours === 0 && minutes === 0) {
+        deleteAnnotationForEscamot(selectedDayDate);
+      } else {
+        saveAnnotation(selectedDayDate, { type: currentAnnotationType, hours, minutes, motivo });
+      }
+      timeModal.classList.add('hidden');
+    });
+
+    cancelTimeBtn.addEventListener('click', () => timeModal.classList.add('hidden'));
+
+    function restoreEscamotFromLocalStorage() {
+      const savedEscamot = localStorage.getItem("selectedEscamot");
+      if (savedEscamot) escamotSelect.value = savedEscamot;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      populateMonthYearSelects();
+      restoreEscamotFromLocalStorage();
+      goToToday();
+      updateTodayDateDisplay();
+      // Procesa resultado si venimos de redirect (Google)
+      await handleRedirectResultIfAny();
+    });
+
+    escamotSelect.addEventListener('change', () => {
+      localStorage.setItem("selectedEscamot", escamotSelect.value);
+      if (userId) subscribeAnnotations(escamotSelect.value);
+      else renderCalendar();
+    });
+    monthSelect.addEventListener('change', renderCalendar);
+    yearSelect.addEventListener('change', renderCalendar);
+    prevMonthBtn.addEventListener('click', () => updateMonth(-1));
+    nextMonthBtn.addEventListener('click', () => updateMonth(1));
+    todayBtn.addEventListener('click', goToToday);
+
+    // ---------- Auth ----------
+    onAuthStateChanged(auth, async (user) => {
+      isAuthReady = true;
+      if (user) {
+        userId = user.uid;
+        userIdDisplay.textContent = `ID de Usuario: ${userId}`;
+        if (!user.isAnonymous) {
+          userPanel.classList.remove('hidden');
+          authButtons.classList.add('hidden');
+          userEmailSpan.textContent = user.email || ("Usuari: " + user.uid);
+          statusMessage.textContent = `Conectado como ${user.email || user.uid}`;
+        } else {
+          userPanel.classList.add('hidden');
+          authButtons.classList.remove('hidden');
+          statusMessage.textContent = "Conectado como anónimo";
+        }
+        subscribeAnnotations(escamotSelect.value);
+      } else {
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          console.error("Error al iniciar sesión anónima:", err);
+          statusMessage.textContent = "Error de autenticación.";
+        }
+      }
+    });
+
+   // ---------- Google Sign-In (manteniendo datos de usuario anónimo) ----------
+googleSignInBtn.addEventListener('click', async () => {
+  const provider = new GoogleAuthProvider();
+
+  // Abrimos el popup inmediatamente
+  let popupPromise;
+  if (auth.currentUser && auth.currentUser.isAnonymous) {
+    popupPromise = linkWithPopup(auth.currentUser, provider)
+      .catch(async (linkErr) => {
+        console.warn("Link con Google falló:", linkErr);
+        // link falló (cuenta existente): hacemos sign-in normal
         const res = await signInWithPopup(auth, provider);
-        const newUid = res.user.uid;
-        if (newUid !== anonUid) {
+
+        // Copiamos datos del anon si hace falta
+        const anonUid = auth.currentUser.uid;
+        const anonData = await fetchAllAnnotationsForUserUid(anonUid);
+        if (res.user.uid !== anonUid) {
+          await writeAnnotationsToUserUid(res.user.uid, anonData);
+        }
+        return res;
+      });
+  } else {
+    popupPromise = signInWithPopup(auth, provider);
+  }
+
+  try {
+    const result = await popupPromise;
+    statusMessage.textContent = "Conectado con Google correctamente.";
+  } catch (err) {
+    console.error("Error Google sign-in:", err);
+    statusMessage.textContent = "Error en inicio con Google.";
+    alert("Error al iniciar sesión con Google: " + (err.message || err.code));
+  }
+});
+
+    // Abrimos popup inmediatamente
+    let result;
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      try {
+        // Intentamos link con Google
+        result = await linkWithPopup(auth.currentUser, provider);
+        statusMessage.textContent = "Cuenta Google vinculada correctamente (datos preservados).";
+      } catch (linkErr) {
+        console.warn("Link con Google falló:", linkErr);
+
+        // Si no se puede linkear (por ejemplo la cuenta Google ya existe), hacemos inicio normal con Google
+        result = await signInWithPopup(auth, provider);
+        const newUid = result.user.uid;
+
+        // Copiamos datos anónimos si el uid cambió
+        if (anonUid && newUid !== anonUid && anonData) {
           await writeAnnotationsToUserUid(newUid, anonData);
           statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
         }
       }
     } else {
-      await signInWithPopup(auth, provider);
+      // Usuario no anónimo: inicio normal
+      result = await signInWithPopup(auth, provider);
+      statusMessage.textContent = "Conectado con Google correctamente.";
     }
+
   } catch (err) {
     console.error("Error Google sign-in:", err);
     statusMessage.textContent = "Error en inicio con Google.";
+    alert("Error al iniciar sesión con Google: " + (err.message || err.code));
   }
 });
 
-document.getElementById('sign-out-btn').addEventListener('click', async () => {
-  await signOut(auth);
-});
 
-onAuthStateChanged(auth, async user => {
-  if (!user) return;
-  userIdDisplay.textContent = `ID de Usuario: ${user.uid}`;
-  if (user.isAnonymous) {
-    authButtons.style.display = 'flex';
-    userPanel.classList.add('hidden');
-    statusMessage.textContent = 'Conectado como usuario anónimo.';
-  } else {
-    authButtons.style.display = 'none';
-    userPanel.classList.remove('hidden');
-    userEmailDisplay.textContent = user.email || '';
-    statusMessage.textContent = 'Conectado como usuario Google.';
-  }
-  annotationsData = await fetchAllAnnotationsForUserUid(user.uid);
-  renderCalendar();
-});
+    // --- Email modal
+    emailOpenBtn.addEventListener('click', () => {
+      emailModal.classList.remove('hidden');
+      emailInput.value = ''; passwordInput.value = '';
+    });
+    emailCloseBtn.addEventListener('click', () => emailModal.classList.add('hidden'));
 
-// --- Calendario ---
-const calendarGrid = document.getElementById('calendar-grid');
-const monthSelect = document.getElementById('month-select');
-const yearSelect = document.getElementById('year-select');
-const todayDate = document.getElementById('today-date');
+    // Crear cuenta (link si es anónimo para preservar datos)
+    emailCreateBtn.addEventListener('click', async () => {
+      const email = (emailInput.value || '').trim();
+      const password = (passwordInput.value || '').trim();
+      if (!email || !password) { alert('Introduce email y contraseña.'); return; }
+      try {
+        if (auth.currentUser && auth.currentUser.isAnonymous) {
+          const anonUid = auth.currentUser.uid;
+          const anonData = await fetchAllAnnotationsForUserUid(anonUid);
+          const credential = EmailAuthProvider.credential(email, password);
+          try {
+            await linkWithCredential(auth.currentUser, credential);
+            statusMessage.textContent = "Cuenta de email vinculada (datos preservados).";
+          } catch (err) {
+            console.warn("linkWithCredential falló:", err);
+            if (err.code === 'auth/email-already-in-use') {
+              const res = await signInWithEmailAndPassword(auth, email, password);
+              const newUid = res.user.uid;
+              if (newUid !== anonUid) {
+                await writeAnnotationsToUserUid(newUid, anonData);
+                statusMessage.textContent = "Datos anónimos copiados a tu cuenta.";
+              }
+            } else {
+              throw err;
+            }
+          }
+        } else {
+          await createUserWithEmailAndPassword(auth, email, password);
+        }
+        emailModal.classList.add('hidden');
+      } catch (err) {
+        console.error("Error crear cuenta/email:", err);
+        alert("Error al crear cuenta: " + (err.message || err.code));
+      }
+    });
 
-const now = new Date();
-let currentMonth = now.getMonth();
-let currentYear = now.getFullYear();
+    // Sign in con email
+    emailSigninBtn.addEventListener('click', async () => {
+      const email = (emailInput.value || '').trim();
+      const password = (passwordInput.value || '').trim();
+      if (!email || !password) { alert('Introduce email y contraseña.'); return; }
+      try {
+        if (auth.currentUser && auth.currentUser.isAnonymous) {
+          const anonUid = auth.currentUser.uid;
+          const anonData = await fetchAllAnnotationsForUserUid(anonUid);
+          const res = await signInWithEmailAndPassword(auth, email, password);
+          const newUid = res.user.uid;
+          if (newUid !== anonUid) {
+            await writeAnnotationsToUserUid(newUid, anonData);
+            statusMessage.textContent = "Anotacions copiades a la teva compte.";
+          }
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+        emailModal.classList.add('hidden');
+      } catch (err) {
+        console.error("Error sign-in email:", err);
+        alert("Error al entrar: " + (err.message || err.code));
+      }
+    });
 
-function populateMonthYearSelectors() {
-  monthSelect.innerHTML = '';
-  for (let m=0; m<12; m++) {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.text = new Date(0, m).toLocaleString('ca', { month:'long' });
-    if (m === currentMonth) opt.selected = true;
-    monthSelect.appendChild(opt);
-  }
-  yearSelect.innerHTML = '';
-  for (let y=currentYear-5; y<=currentYear+5; y++) {
-    const opt = document.createElement('option');
-    opt.value = y;
-    opt.text = y;
-    if (y === currentYear) opt.selected = true;
-    yearSelect.appendChild(opt);
-  }
-}
-populateMonthYearSelectors();
+    // Sign out
+    signOutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        statusMessage.textContent = "Sessió tancada. Iniciant com a anònim...";
+      } catch (err) {
+        console.error("Error al cerrar sesion:", err);
+      }
+    });
 
-monthSelect.addEventListener('change', () => { currentMonth = parseInt(monthSelect.value); renderCalendar(); });
-yearSelect.addEventListener('change', () => { currentYear = parseInt(yearSelect.value); renderCalendar(); });
-document.getElementById('prev-month-btn').addEventListener('click', () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--; yearSelect.value=currentYear;} monthSelect.value=currentMonth; renderCalendar(); });
-document.getElementById('next-month-btn').addEventListener('click', () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++; yearSelect.value=currentYear;} monthSelect.value=currentMonth; renderCalendar(); });
-document.getElementById('today-btn').addEventListener('click', () => { currentMonth=now.getMonth(); currentYear=now.getFullYear(); monthSelect.value=currentMonth; yearSelect.value=currentYear; renderCalendar(); });
+    // Fallback anónimo si algo raro tarda
+    setTimeout(async () => {
+      if (!isAuthReady) {
+        try { await signInAnonymously(auth); } catch(e){ /* no-op */ }
+      }
+    }, 1500);
 
-function renderCalendar() {
-  calendarGrid.innerHTML = '';
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-  for (let i=0;i<firstDay;i++) {
-    const div = document.createElement('div'); div.classList.add('day-box','faded'); calendarGrid.appendChild(div);
-  }
-  for (let d=1; d<=daysInMonth; d++) {
-    const div = document.createElement('div'); div.classList.add('day-box');
-    const spanNum = document.createElement('div'); spanNum.classList.add('day-number'); spanNum.textContent=d; div.appendChild(spanNum);
-    const annText = annotationsData[`${currentYear}-${currentMonth+1}-${d}`]||'';
-    if(annText){ div.classList.add('annotation-highlight'); }
-    const spanAnn = document.createElement('div'); spanAnn.classList.add('day-annotation'); spanAnn.textContent=annText; div.appendChild(spanAnn);
-    div.addEventListener('click', () => openAnnotationModal(d));
-    calendarGrid.appendChild(div);
-  }
-  todayDate.textContent = new Date(currentYear, currentMonth, 1).toLocaleDateString('ca', {month:'long', year:'numeric'});
-}
+    // ---------- Helpers de auth (redirect + errores) ----------
+    function isPopupIssue(err){
+      const c = err?.code || '';
+      return c === 'auth/popup-blocked' ||
+             c === 'auth/popup-closed-by-user' ||
+             c === 'auth/cancelled-popup-request' ||
+             c === 'auth/operation-not-supported-in-this-environment';
+    }
 
-function openAnnotationModal(day) {
-  currentDaySelected = day;
-  const modal = document.getElementById('annotation-modal');
-  const textarea = document.getElementById('annotation-text');
-  textarea.value = annotationsData[`${currentYear}-${currentMonth+1}-${day}`]||'';
-  modal.classList.remove('hidden');
-}
-document.getElementById('close-annotation-btn').addEventListener('click', () => { document.getElementById('annotation-modal').classList.add('hidden'); });
-document.getElementById('save-annotation-btn').addEventListener('click', async () => {
-  const text = document.getElementById('annotation-text').value;
-  annotationsData[`${currentYear}-${currentMonth+1}-${currentDaySelected}`] = text;
-  if(auth.currentUser) await writeAnnotationsToUserUid(auth.currentUser.uid, annotationsData);
-  document.getElementById('annotation-modal').classList.add('hidden');
-  renderCalendar();
-});
+    function humanAuthError(err){
+      const code = err?.code || '';
+      if (code === 'auth/unauthorized-domain')
+        return "Dominio no autorizado en Firebase Auth > Settings > Authorized domains.";
+      if (code === 'auth/operation-not-allowed')
+        return "Proveedor Google no habilitado en Firebase Auth > Sign-in method.";
+      if (code === 'auth/network-request-failed')
+        return "Fallo de red. Revisa conexión o bloqueadores.";
+      if (code === 'auth/internal-error')
+        return "Error interno de autenticación.";
+      return "Error en inicio con Google.";
+    }
 
-ensureAnonymousUser();
-</script>
+    async function handleRedirectResultIfAny(){
+      try {
+        const res = await getRedirectResult(auth);
+        if (res && res.user) {
+          const newUid = res.user.uid;
+          const backupUid = localStorage.getItem(LS_KEYS.anonUid);
+          const json = localStorage.getItem(LS_KEYS.anonData);
+          if (json && backupUid && backupUid !== newUid) {
+            try {
+              const data = JSON.parse(json);
+              await writeAnnotationsToUserUid(newUid, data);
+              statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google (redirect).";
+            } catch(e){
+              console.warn("No se pudieron copiar datos tras redirect:", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("getRedirectResult error:", e?.code || e);
+        statusMessage.textContent = humanAuthError(e);
+      } finally {
+        // Limpia backups para no ocupar storage
+        localStorage.removeItem(LS_KEYS.anonUid);
+        localStorage.removeItem(LS_KEYS.anonData);
+      }
+    }
+
+  </script>
 </body>
 </html>
+
+
 
 
