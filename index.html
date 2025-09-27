@@ -1,371 +1,300 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mossos calendar by JPL</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
-    .day-box { min-height: 90px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:8px; text-align:center; cursor:pointer; transition:transform 0.1s ease-in-out; }
-    .day-box:hover { transform: scale(1.02); }
-    .day-box.faded { opacity:0.5; cursor:pointer; transform:none; }
-    .day-box.annotation-highlight { border-width:2px; border-color:#000; }
-    .day-number { font-weight:600; font-size:1.25rem; }
-    .day-shift { font-size:0.875rem; line-height:1; }
-    .day-annotation { font-size:0.75rem; font-weight:500; color:#4B5563; padding-left:4px; padding-right:4px; padding-bottom:6px; word-wrap:break-word; line-height:1.1; }
-    .button { padding:8px 16px; font-weight:500; border-radius:9999px; transition:background-color 0.15s ease-in-out; }
-    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:50; }
-    .modal-content { background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,.1),0 10px 15px rgba(0,0,0,.1); width:90%; max-width:420px; text-align:center; }
-    .modal-button { display:block; width:100%; padding:12px; margin-top:8px; border-radius:8px; background:#E5E7EB; color:#1F2937; font-weight:600; transition:background-color .15s; }
-    .modal-button:hover { background:#D1D5DB; }
-    .input-group { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-    .input-group label { font-weight:500; color:#4B5563; }
-    .input-group input, .input-group textarea { width:45%; padding:8px; border-radius:8px; border:1px solid #D1D5DB; text-align:center; }
-    .total-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #E5E7EB; }
-    .total-item:last-child { border-bottom:none; }
-    .total-item span:first-child { font-weight:500; color:#4B5563; }
-    .total-item span:last-child { font-weight:600; color:#1F2937; }
-    @media (max-width:640px) {
-      .day-box { min-height:80px; padding:6px; }
-      .day-number { font-size:1.1rem; }
-      .day-shift { font-size:0.75rem; }
-      .day-annotation { font-size:0.65rem; padding-bottom:2px; }
-      h1 { font-size:1.75rem; }
-    }
-    .user-id { font-size:0.75rem; color:#6B7280; margin-top:1rem; text-align:center; word-break:break-all; }
-    .status-message { margin-top:0.5rem; font-size:0.875rem; color:#4B5563; text-align:center; }
-    .auth-btn { padding:6px 10px; border-radius:8px; font-weight:600; border:1px solid #E5E7EB; background:white; }
-    .small-muted { font-size:0.8rem; color:#6B7280; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mossos calendar by JPL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
+  .day-box { min-height: 90px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:8px; text-align:center; cursor:pointer; transition:transform 0.1s ease-in-out; }
+  .day-box:hover { transform: scale(1.02); }
+  .day-box.faded { opacity:0.5; cursor:pointer; transform:none; }
+  .day-box.annotation-highlight { border-width:2px; border-color:#000; }
+  .day-number { font-weight:600; font-size:1.25rem; }
+  .day-shift { font-size:0.875rem; line-height:1; }
+  .day-annotation { font-size:0.75rem; font-weight:500; color:#4B5563; padding-left:4px; padding-right:4px; padding-bottom:6px; word-wrap:break-word; line-height:1.1; }
+  .button { padding:8px 16px; font-weight:500; border-radius:9999px; transition:background-color 0.15s ease-in-out; }
+  .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:50; }
+  .modal-content { background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,.1),0 10px 15px rgba(0,0,0,.1); width:90%; max-width:420px; text-align:center; }
+  .modal-button { display:block; width:100%; padding:12px; margin-top:8px; border-radius:8px; background:#E5E7EB; color:#1F2937; font-weight:600; transition:background-color .15s; }
+  .modal-button:hover { background:#D1D5DB; }
+  .input-group { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .input-group label { font-weight:500; color:#4B5563; }
+  .input-group input, .input-group textarea { width:45%; padding:8px; border-radius:8px; border:1px solid #D1D5DB; text-align:center; }
+  .total-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #E5E7EB; }
+  .total-item:last-child { border-bottom:none; }
+  .total-item span:first-child { font-weight:500; color:#4B5563; }
+  .total-item span:last-child { font-weight:600; color:#1F2937; }
+  @media (max-width:640px) {
+    .day-box { min-height:80px; padding:6px; }
+    .day-number { font-size:1.1rem; }
+    .day-shift { font-size:0.75rem; }
+    .day-annotation { font-size:0.65rem; padding-bottom:2px; }
+    h1 { font-size:1.75rem; }
+  }
+  .user-id { font-size:0.75rem; color:#6B7280; margin-top:1rem; text-align:center; word-break:break-all; }
+  .status-message { margin-top:0.5rem; font-size:0.875rem; color:#4B5563; text-align:center; }
+  .auth-btn { padding:6px 10px; border-radius:8px; font-weight:600; border:1px solid #E5E7EB; background:white; }
+  .small-muted { font-size:0.8rem; color:#6B7280; }
+</style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
 
-  <div class="w-full max-w-4xl bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
-    <div class="flex items-start justify-between mb-4">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Mossos calendar by JPL</h1>
-        <div class="small-muted">Gestiona les teves anotacions i hores</div>
+<div class="w-full max-w-4xl bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
+  <div class="flex items-start justify-between mb-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">Mossos calendar by JPL</h1>
+      <div class="small-muted">Gestiona les teves anotacions i hores</div>
+    </div>
+    <div class="flex flex-col items-end space-y-2">
+      <div id="auth-buttons" class="flex space-x-2">
+        <button id="google-signin-btn" class="auth-btn">Google</button>
+        <button id="email-open-btn" class="auth-btn">Email</button>
       </div>
-
-      <!-- Auth panel -->
-      <div class="flex flex-col items-end space-y-2">
-        <div id="auth-buttons" class="flex space-x-2">
-          <button id="google-signin-btn" class="auth-btn">Google</button>
-          <button id="email-open-btn" class="auth-btn">Email</button>
-        </div>
-        <div id="user-panel" class="hidden text-right">
-          <div class="text-sm text-gray-700" id="user-email"></div>
-          <div class="flex items-center space-x-2">
-            <button id="sign-out-btn" class="button bg-red-500 hover:bg-red-600 text-white">Tancar sessió</button>
-          </div>
+      <div id="user-panel" class="hidden text-right">
+        <div class="text-sm text-gray-700" id="user-email"></div>
+        <div class="flex items-center space-x-2">
+          <button id="sign-out-btn" class="button bg-red-500 hover:bg-red-600 text-white">Tancar sessió</button>
         </div>
       </div>
-    </div>
-
-    <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
-      <div class="flex-grow w-full md:w-auto">
-        <label for="escamot-select" class="block text-sm font-medium text-gray-700 mb-1">Selecciona el teu Escamot</label>
-        <select id="escamot-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2">
-          <option value="1">Escamot 1</option>
-          <option value="2">Escamot 2</option>
-          <option value="3">Escamot 3</option>
-          <option value="4">Escamot 4</option>
-          <option value="5">Escamot 5</option>
-        </select>
-      </div>
-
-      <div class="flex flex-grow w-full md:w-auto mt-4 md:mt-0 space-x-2">
-        <div class="flex-1">
-          <label for="month-select" class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
-          <select id="month-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
-        </div>
-        <div class="flex-1">
-          <label for="year-select" class="block text-sm font-medium text-gray-700 mb-1">Any</label>
-          <select id="year-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex justify-between mb-4 items-center">
-      <button id="prev-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">&lt; Mes Anterior</button>
-      <div class="flex items-center space-x-3">
-        <button id="today-btn" class="button bg-indigo-600 hover:bg-indigo-700 text-white">Avui</button>
-        <span id="today-date" class="text-sm sm:text-base text-gray-700 font-medium"></span>
-      </div>
-      <button id="next-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">Mes Següent &gt;</button>
-    </div>
-
-    <div id="calendar-container">
-      <div class="grid grid-cols-7 text-center font-bold text-gray-700 bg-gray-200 rounded-t-lg p-2">
-        <div>Dill</div><div>Dim</div><div>Dmc</div><div>Dij</div><div>Div</div><div>Dis</div><div>Diu</div>
-      </div>
-      <div id="calendar-grid" class="grid grid-cols-7 gap-1 p-1 sm:p-2 bg-white rounded-b-lg border border-gray-200"></div>
-    </div>
-
-    <p class="status-message" id="status-message">Conectando...</p>
-    <p class="user-id" id="user-id">ID de Usuario: Cargando...</p>
-
-    <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-      <h2 id="summary-title" class="text-xl font-bold text-gray-800 mb-3">Resum Anual</h2>
-      <div class="total-item"><span>Total d'hores planificades:</span><span id="total-scheduled">0 h</span></div>
-      <div class="total-item"><span>Total d'hores treballades:</span><span id="total-worked">0 h</span></div>
-      <div class="total-item"><span>Total d'hores que s'han de treballar a l'any:</span><span id="total-expected">1680 h</span></div>
-      <div class="total-item"><span>Total de vacances:</span><span id="total-vacation">0 h</span></div>
-      <div class="total-item"><span>Total de dies treballats:</span><span id="total-days-worked">0 dies</span></div>
-      <div class="total-item"><span>Total d'hores de perllongament:</span><span id="total-overtime">0 h 0 m</span></div>
-      <div class="total-item"><span>Romanent per fer any:</span><span id="remaining-year">0 h 0 m</span></div>
-      <div class="total-item"><span>Romanent fet any:</span><span id="done-year">0 h 0 m</span></div>
-      <div class="total-item"><span>Total de judicis:</span><span id="total-courts">0</span></div>
     </div>
   </div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<script>
-  // === Firebase Setup ===
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_PROYECTO.firebaseapp.com",
-    databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
-    projectId: "TU_PROYECTO",
-    storageBucket: "TU_PROYECTO.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
-    appId: "TU_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
+  <!-- Selección de escamot, mes y año -->
+  <div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0 md:space-x-4">
+    <div class="flex-grow w-full md:w-auto">
+      <label for="escamot-select" class="block text-sm font-medium text-gray-700 mb-1">Selecciona el teu Escamot</label>
+      <select id="escamot-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2">
+        <option value="1">Escamot 1</option>
+        <option value="2">Escamot 2</option>
+        <option value="3">Escamot 3</option>
+        <option value="4">Escamot 4</option>
+        <option value="5">Escamot 5</option>
+      </select>
+    </div>
 
-  let currentUser = null;
+    <div class="flex flex-grow w-full md:w-auto mt-4 md:mt-0 space-x-2">
+      <div class="flex-1">
+        <label for="month-select" class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+        <select id="month-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+      </div>
+      <div class="flex-1">
+        <label for="year-select" class="block text-sm font-medium text-gray-700 mb-1">Any</label>
+        <select id="year-select" class="block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+      </div>
+    </div>
+  </div>
 
-  const calendarGrid = document.getElementById("calendar-grid");
-  const monthSelect = document.getElementById("month-select");
-  const yearSelect = document.getElementById("year-select");
-  const todayBtn = document.getElementById("today-btn");
-  const todayDateSpan = document.getElementById("today-date");
-  const prevMonthBtn = document.getElementById("prev-month-btn");
-  const nextMonthBtn = document.getElementById("next-month-btn");
+  <div class="flex justify-between mb-4 items-center">
+    <button id="prev-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">&lt; Mes Anterior</button>
+    <div class="flex items-center space-x-3">
+      <button id="today-btn" class="button bg-indigo-600 hover:bg-indigo-700 text-white">Avui</button>
+      <span id="today-date" class="text-sm sm:text-base text-gray-700 font-medium"></span>
+    </div>
+    <button id="next-month-btn" class="button bg-gray-300 hover:bg-gray-400 text-gray-800">Mes Següent &gt;</button>
+  </div>
 
-  const userIdSpan = document.getElementById("user-id");
-  const statusMessage = document.getElementById("status-message");
+  <div id="calendar-container">
+    <div class="grid grid-cols-7 text-center font-bold text-gray-700 bg-gray-200 rounded-t-lg p-2">
+      <div>Dill</div><div>Dim</div><div>Dmc</div><div>Dij</div><div>Div</div><div>Dis</div><div>Diu</div>
+    </div>
+    <div id="calendar-grid" class="grid grid-cols-7 gap-1 p-1 sm:p-2 bg-white rounded-b-lg border border-gray-200"></div>
+  </div>
 
-  const authButtons = document.getElementById("auth-buttons");
-  const userPanel = document.getElementById("user-panel");
-  const userEmailSpan = document.getElementById("user-email");
-  const signOutBtn = document.getElementById("sign-out-btn");
-  const googleSignInBtn = document.getElementById("google-signin-btn");
-  const emailOpenBtn = document.getElementById("email-open-btn");
+  <p class="status-message" id="status-message">Conectando...</p>
+  <p class="user-id" id="user-id">ID de Usuario: Cargando...</p>
 
-  const totalScheduled = document.getElementById("total-scheduled");
-  const totalWorked = document.getElementById("total-worked");
-  const totalVacation = document.getElementById("total-vacation");
-  const totalDaysWorked = document.getElementById("total-days-worked");
-  const totalOvertime = document.getElementById("total-overtime");
-  const remainingYear = document.getElementById("remaining-year");
-  const doneYear = document.getElementById("done-year");
-  const totalCourts = document.getElementById("total-courts");
+  <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <h2 id="summary-title" class="text-xl font-bold text-gray-800 mb-4">Resum Anual</h2>
+    <div id="totals-display">
+      <div class="total-item"><span>Total d'hores planificades:</span><span id="total-planned-hours">0 h</span></div>
+      <div class="total-item"><span>Total d'hores treballades:</span><span id="total-worked-hours">0 h</span></div>
+      <div class="total-item"><span>Total d'hores que s'han de treballar a l'any:</span><span id="total-annual-hours">1680 h</span></div>
+      <div class="total-item"><span>Total de vacances:</span><span id="total-vacances-hours">0 h</span></div>
+      <div class="total-item"><span>Total de dies treballats:</span><span id="total-worked-days">0 dies</span></div>
+      <div class="total-item"><span>Total d'hores de perllongament:</span><span id="total-perllongament-hours">0 h 0 m</span></div>
+      <div class="total-item"><span>Romanent per fer any:</span><span id="total-romanent-per-fer-hours" class="font-bold">0 h</span></div>
+    </div>
+  </div>
+</div>
 
-  const escamotSelect = document.getElementById("escamot-select");
+<!-- Modal anotaciones -->
+<div id="annotation-modal" class="hidden modal-overlay">
+  <div class="modal-content">
+    <h3 class="text-lg font-bold mb-4">Afegir / Editar Anotació</h3>
+    <textarea id="annotation-text" rows="4" class="w-full border p-2 rounded-md mb-4"></textarea>
+    <button id="save-annotation-btn" class="modal-button bg-indigo-600 text-white">Guardar</button>
+    <button id="close-annotation-btn" class="modal-button">Tancar</button>
+  </div>
+</div>
 
-  let today = new Date();
-  let currentMonth = today.getMonth();
-  let currentYear = today.getFullYear();
+<!-- Firebase & Google Auth scripts -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, linkWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
-  function populateMonthYearSelects() {
-    for (let i=0;i<12;i++){
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = new Date(0,i).toLocaleString('ca-ES',{month:'long'});
-      if (i===currentMonth) option.selected=true;
-      monthSelect.appendChild(option);
-    }
-    for (let y=currentYear-1; y<=currentYear+2;y++){
-      const option = document.createElement("option");
-      option.value = y;
-      option.textContent = y;
-      if (y===currentYear) option.selected=true;
-      yearSelect.appendChild(option);
-    }
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROJECT.firebaseapp.com",
+  projectId: "TU_PROJECT",
+  storageBucket: "TU_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const statusMessage = document.getElementById('status-message');
+const userIdDisplay = document.getElementById('user-id');
+const userEmailDisplay = document.getElementById('user-email');
+const authButtons = document.getElementById('auth-buttons');
+const userPanel = document.getElementById('user-panel');
+
+let annotationsData = {}; // Local cache de anotaciones
+let currentDaySelected = null;
+
+// --- Funciones Firebase ---
+async function fetchAllAnnotationsForUserUid(uid) {
+  const docSnap = await getDoc(doc(db, 'annotations', uid));
+  return docSnap.exists() ? docSnap.data() : {};
+}
+
+async function writeAnnotationsToUserUid(uid, data) {
+  await setDoc(doc(db, 'annotations', uid), data);
+}
+
+// --- Auth ---
+async function ensureAnonymousUser() {
+  if (!auth.currentUser) {
+    await signInAnonymously(auth);
   }
+}
 
-  function renderCalendar(month, year) {
-    calendarGrid.innerHTML = "";
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month+1,0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-
-    for(let i=0;i<firstDay;i++){
-      const emptyBox = document.createElement("div");
-      emptyBox.className="day-box faded";
-      emptyBox.textContent=prevMonthDays-firstDay+i+1;
-      calendarGrid.appendChild(emptyBox);
-    }
-
-    for(let day=1; day<=daysInMonth; day++){
-      const dayBox = document.createElement("div");
-      dayBox.className="day-box";
-      const dayNumber = document.createElement("div");
-      dayNumber.className="day-number";
-      dayNumber.textContent=day;
-      dayBox.appendChild(dayNumber);
-
-      const shiftDiv = document.createElement("div");
-      shiftDiv.className="day-shift";
-      shiftDiv.textContent="—"; // aquí se puede poner turno
-      dayBox.appendChild(shiftDiv);
-
-      const annotationDiv = document.createElement("div");
-      annotationDiv.className="day-annotation";
-      annotationDiv.textContent="";
-      dayBox.appendChild(annotationDiv);
-
-      dayBox.addEventListener("click",()=>{
-        if(!currentUser){
-          alert("Inicia sessió per afegir anotacions.");
-          return;
+document.getElementById('google-signin-btn').addEventListener('click', async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      const anonUid = auth.currentUser.uid;
+      const anonData = await fetchAllAnnotationsForUserUid(anonUid);
+      try {
+        await linkWithPopup(auth.currentUser, provider);
+        statusMessage.textContent = "Cuenta Google vinculada correctamente (datos preservados).";
+      } catch (err) {
+        const res = await signInWithPopup(auth, provider);
+        const newUid = res.user.uid;
+        if (newUid !== anonUid) {
+          await writeAnnotationsToUserUid(newUid, anonData);
+          statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
         }
-        openAnnotationModal(year, month+1, day, annotationDiv);
-      });
-
-      calendarGrid.appendChild(dayBox);
-    }
-
-    todayDateSpan.textContent = new Date().toLocaleDateString('ca-ES');
-  }
-
-  function openAnnotationModal(year, month, day, annotationDiv){
-    const existingAnnotation = annotationDiv.textContent || "";
-
-    const modalOverlay = document.createElement("div");
-    modalOverlay.className="modal-overlay";
-
-    const modalContent = document.createElement("div");
-    modalContent.className="modal-content";
-
-    const title = document.createElement("h3");
-    title.textContent=`Anotació ${day}/${month}/${year}`;
-    title.className="text-lg font-bold mb-2";
-    modalContent.appendChild(title);
-
-    const textarea = document.createElement("textarea");
-    textarea.className="w-full border rounded p-2 mb-4";
-    textarea.rows=4;
-    textarea.value=existingAnnotation;
-    modalContent.appendChild(textarea);
-
-    const saveBtn = document.createElement("button");
-    saveBtn.textContent="Guardar";
-    saveBtn.className="modal-button bg-indigo-600 text-white hover:bg-indigo-700";
-    saveBtn.addEventListener("click",()=>{
-      const val = textarea.value.trim();
-      annotationDiv.textContent=val;
-      modalOverlay.remove();
-      if(currentUser){
-        const path = `users/${currentUser.uid}/annotations/${year}-${month}-${day}`;
-        db.ref(path).set(val);
       }
-    });
-    modalContent.appendChild(saveBtn);
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.textContent="Cancelar";
-    cancelBtn.className="modal-button";
-    cancelBtn.addEventListener("click",()=>modalOverlay.remove());
-    modalContent.appendChild(cancelBtn);
-
-    modalOverlay.appendChild(modalContent);
-    document.body.appendChild(modalOverlay);
-  }
-
-  // === Auth ===
-  googleSignInBtn.addEventListener("click",()=>{
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider);
-  });
-
-  signOutBtn.addEventListener("click",()=>auth.signOut());
-
-  auth.onAuthStateChanged(user=>{
-    if(user){
-      currentUser=user;
-      authButtons.style.display="none";
-      userPanel.style.display="block";
-      userEmailSpan.textContent=user.email;
-      userIdSpan.textContent=`ID de Usuario: ${user.uid}`;
-      statusMessage.textContent="Conectado";
-      loadUserAnnotations();
     } else {
-      currentUser=null;
-      authButtons.style.display="flex";
-      userPanel.style.display="none";
-      userIdSpan.textContent="ID de Usuario: Cargando...";
-      statusMessage.textContent="Conectando...";
+      await signInWithPopup(auth, provider);
     }
-  });
-
-  function loadUserAnnotations(){
-    if(!currentUser) return;
-    const path = `users/${currentUser.uid}/annotations`;
-    db.ref(path).once("value").then(snapshot=>{
-      const data = snapshot.val()||{};
-      document.querySelectorAll(".day-box").forEach(box=>{
-        const day = box.querySelector(".day-number").textContent;
-        const month = parseInt(monthSelect.value)+1;
-        const year = parseInt(yearSelect.value);
-        const key = `${year}-${month}-${day}`;
-        if(data[key]){
-          box.querySelector(".day-annotation").textContent=data[key];
-        }
-      });
-    });
+  } catch (err) {
+    console.error("Error Google sign-in:", err);
+    statusMessage.textContent = "Error en inicio con Google.";
   }
+});
 
-  // === Navigation ===
-  monthSelect.addEventListener("change",()=>{
-    currentMonth=parseInt(monthSelect.value);
-    renderCalendar(currentMonth,currentYear);
-  });
-  yearSelect.addEventListener("change",()=>{
-    currentYear=parseInt(yearSelect.value);
-    renderCalendar(currentMonth,currentYear);
-  });
-  todayBtn.addEventListener("click",()=>{
-    today=new Date();
-    currentMonth=today.getMonth();
-    currentYear=today.getFullYear();
-    monthSelect.value=currentMonth;
-    yearSelect.value=currentYear;
-    renderCalendar(currentMonth,currentYear);
-  });
-  prevMonthBtn.addEventListener("click",()=>{
-    currentMonth--;
-    if(currentMonth<0){currentMonth=11;currentYear--;}
-    monthSelect.value=currentMonth;
-    yearSelect.value=currentYear;
-    renderCalendar(currentMonth,currentYear);
-  });
-  nextMonthBtn.addEventListener("click",()=>{
-    currentMonth++;
-    if(currentMonth>11){currentMonth=0;currentYear++;}
-    monthSelect.value=currentMonth;
-    yearSelect.value=currentYear;
-    renderCalendar(currentMonth,currentYear);
-  });
+document.getElementById('sign-out-btn').addEventListener('click', async () => {
+  await signOut(auth);
+});
 
-  populateMonthYearSelects();
-  renderCalendar(currentMonth,currentYear);
+onAuthStateChanged(auth, async user => {
+  if (!user) return;
+  userIdDisplay.textContent = `ID de Usuario: ${user.uid}`;
+  if (user.isAnonymous) {
+    authButtons.style.display = 'flex';
+    userPanel.classList.add('hidden');
+    statusMessage.textContent = 'Conectado como usuario anónimo.';
+  } else {
+    authButtons.style.display = 'none';
+    userPanel.classList.remove('hidden');
+    userEmailDisplay.textContent = user.email || '';
+    statusMessage.textContent = 'Conectado como usuario Google.';
+  }
+  annotationsData = await fetchAllAnnotationsForUserUid(user.uid);
+  renderCalendar();
+});
+
+// --- Calendario ---
+const calendarGrid = document.getElementById('calendar-grid');
+const monthSelect = document.getElementById('month-select');
+const yearSelect = document.getElementById('year-select');
+const todayDate = document.getElementById('today-date');
+
+const now = new Date();
+let currentMonth = now.getMonth();
+let currentYear = now.getFullYear();
+
+function populateMonthYearSelectors() {
+  monthSelect.innerHTML = '';
+  for (let m=0; m<12; m++) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.text = new Date(0, m).toLocaleString('ca', { month:'long' });
+    if (m === currentMonth) opt.selected = true;
+    monthSelect.appendChild(opt);
+  }
+  yearSelect.innerHTML = '';
+  for (let y=currentYear-5; y<=currentYear+5; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.text = y;
+    if (y === currentYear) opt.selected = true;
+    yearSelect.appendChild(opt);
+  }
+}
+populateMonthYearSelectors();
+
+monthSelect.addEventListener('change', () => { currentMonth = parseInt(monthSelect.value); renderCalendar(); });
+yearSelect.addEventListener('change', () => { currentYear = parseInt(yearSelect.value); renderCalendar(); });
+document.getElementById('prev-month-btn').addEventListener('click', () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--; yearSelect.value=currentYear;} monthSelect.value=currentMonth; renderCalendar(); });
+document.getElementById('next-month-btn').addEventListener('click', () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++; yearSelect.value=currentYear;} monthSelect.value=currentMonth; renderCalendar(); });
+document.getElementById('today-btn').addEventListener('click', () => { currentMonth=now.getMonth(); currentYear=now.getFullYear(); monthSelect.value=currentMonth; yearSelect.value=currentYear; renderCalendar(); });
+
+function renderCalendar() {
+  calendarGrid.innerHTML = '';
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+  for (let i=0;i<firstDay;i++) {
+    const div = document.createElement('div'); div.classList.add('day-box','faded'); calendarGrid.appendChild(div);
+  }
+  for (let d=1; d<=daysInMonth; d++) {
+    const div = document.createElement('div'); div.classList.add('day-box');
+    const spanNum = document.createElement('div'); spanNum.classList.add('day-number'); spanNum.textContent=d; div.appendChild(spanNum);
+    const annText = annotationsData[`${currentYear}-${currentMonth+1}-${d}`]||'';
+    if(annText){ div.classList.add('annotation-highlight'); }
+    const spanAnn = document.createElement('div'); spanAnn.classList.add('day-annotation'); spanAnn.textContent=annText; div.appendChild(spanAnn);
+    div.addEventListener('click', () => openAnnotationModal(d));
+    calendarGrid.appendChild(div);
+  }
+  todayDate.textContent = new Date(currentYear, currentMonth, 1).toLocaleDateString('ca', {month:'long', year:'numeric'});
+}
+
+function openAnnotationModal(day) {
+  currentDaySelected = day;
+  const modal = document.getElementById('annotation-modal');
+  const textarea = document.getElementById('annotation-text');
+  textarea.value = annotationsData[`${currentYear}-${currentMonth+1}-${day}`]||'';
+  modal.classList.remove('hidden');
+}
+document.getElementById('close-annotation-btn').addEventListener('click', () => { document.getElementById('annotation-modal').classList.add('hidden'); });
+document.getElementById('save-annotation-btn').addEventListener('click', async () => {
+  const text = document.getElementById('annotation-text').value;
+  annotationsData[`${currentYear}-${currentMonth+1}-${currentDaySelected}`] = text;
+  if(auth.currentUser) await writeAnnotationsToUserUid(auth.currentUser.uid, annotationsData);
+  document.getElementById('annotation-modal').classList.add('hidden');
+  renderCalendar();
+});
+
+ensureAnonymousUser();
 </script>
 </body>
 </html>
-
-
-
-
-
 
 
