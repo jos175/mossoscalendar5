@@ -656,48 +656,33 @@
    // ---------- Google Sign-In (manteniendo datos de usuario anónimo) ----------
 googleSignInBtn.addEventListener('click', async () => {
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  // Guardamos datos anónimos antes de iniciar el redirect
+  let anonData = null;
+  let anonUid = null;
+  if (auth.currentUser && auth.currentUser.isAnonymous) {
+    anonUid = auth.currentUser.uid;
+    try {
+      anonData = await fetchAllAnnotationsForUserUid(anonUid);
+      // Guardamos en localStorage para recuperarlo tras redirect
+      localStorage.setItem(LS_KEYS.anonUid, anonUid);
+      localStorage.setItem(LS_KEYS.anonData, JSON.stringify(anonData));
+    } catch (e) {
+      console.warn("No se pudieron guardar datos anónimos antes del redirect", e);
+    }
+  }
 
   try {
-    // Guardamos datos anónimos antes del popup
-    let anonData = null;
-    let anonUid = null;
-    if (auth.currentUser && auth.currentUser.isAnonymous) {
-      anonUid = auth.currentUser.uid;
-      anonData = await fetchAllAnnotationsForUserUid(anonUid);
-    }
-
-    // Abrimos popup inmediatamente
-    let result;
-    if (auth.currentUser && auth.currentUser.isAnonymous) {
-      try {
-        // Intentamos link con Google
-        result = await linkWithPopup(auth.currentUser, provider);
-        statusMessage.textContent = "Cuenta Google vinculada correctamente (datos preservados).";
-      } catch (linkErr) {
-        console.warn("Link con Google falló:", linkErr);
-
-        // Si no se puede linkear (por ejemplo la cuenta Google ya existe), hacemos inicio normal con Google
-        result = await signInWithPopup(auth, provider);
-        const newUid = result.user.uid;
-
-        // Copiamos datos anónimos si el uid cambió
-        if (anonUid && newUid !== anonUid && anonData) {
-          await writeAnnotationsToUserUid(newUid, anonData);
-          statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
-        }
-      }
-    } else {
-      // Usuario no anónimo: inicio normal
-      result = await signInWithPopup(auth, provider);
-      statusMessage.textContent = "Conectado con Google correctamente.";
-    }
-
+    // Redirigimos al login de Google
+    await signInWithRedirect(auth, provider);
+    // La continuación se maneja en getRedirectResult() al cargar la página
   } catch (err) {
-    console.error("Error Google sign-in:", err);
-    statusMessage.textContent = "Error en inicio con Google.";
+    console.error("Error iniciando Google Sign-In con redirect:", err);
     alert("Error al iniciar sesión con Google: " + (err.message || err.code));
   }
 });
+
 
 
     // --- Email modal
