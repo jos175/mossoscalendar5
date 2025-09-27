@@ -657,14 +657,36 @@
 googleSignInBtn.addEventListener('click', async () => {
   const provider = new GoogleAuthProvider();
 
+  // Abrimos el popup inmediatamente
+  let popupPromise;
+  if (auth.currentUser && auth.currentUser.isAnonymous) {
+    popupPromise = linkWithPopup(auth.currentUser, provider)
+      .catch(async (linkErr) => {
+        console.warn("Link con Google falló:", linkErr);
+        // link falló (cuenta existente): hacemos sign-in normal
+        const res = await signInWithPopup(auth, provider);
+
+        // Copiamos datos del anon si hace falta
+        const anonUid = auth.currentUser.uid;
+        const anonData = await fetchAllAnnotationsForUserUid(anonUid);
+        if (res.user.uid !== anonUid) {
+          await writeAnnotationsToUserUid(res.user.uid, anonData);
+        }
+        return res;
+      });
+  } else {
+    popupPromise = signInWithPopup(auth, provider);
+  }
+
   try {
-    // Guardamos datos anónimos antes del popup
-    let anonData = null;
-    let anonUid = null;
-    if (auth.currentUser && auth.currentUser.isAnonymous) {
-      anonUid = auth.currentUser.uid;
-      anonData = await fetchAllAnnotationsForUserUid(anonUid);
-    }
+    const result = await popupPromise;
+    statusMessage.textContent = "Conectado con Google correctamente.";
+  } catch (err) {
+    console.error("Error Google sign-in:", err);
+    statusMessage.textContent = "Error en inicio con Google.";
+    alert("Error al iniciar sesión con Google: " + (err.message || err.code));
+  }
+});
 
     // Abrimos popup inmediatamente
     let result;
@@ -837,6 +859,7 @@ googleSignInBtn.addEventListener('click', async () => {
   </script>
 </body>
 </html>
+
 
 
 
