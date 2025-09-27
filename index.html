@@ -653,58 +653,52 @@
       }
     });
 
-    // --- Google Sign-In con fallback a redirect y preservando datos anónimos
-    googleSignInBtn.addEventListener('click', async () => {
+   // ---------- Google Sign-In (manteniendo datos de usuario anónimo) ----------
+googleSignInBtn.addEventListener('click', async () => {
+  const provider = new GoogleAuthProvider();
+
+  try {
+    // Guardamos datos anónimos antes del popup
+    let anonData = null;
+    let anonUid = null;
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      anonUid = auth.currentUser.uid;
+      anonData = await fetchAllAnnotationsForUserUid(anonUid);
+    }
+
+    // Abrimos popup inmediatamente
+    let result;
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
       try {
-        if (auth.currentUser && auth.currentUser.isAnonymous) {
-          const anonUid = auth.currentUser.uid;
-          const anonData = await fetchAllAnnotationsForUserUid(anonUid);
-          try {
-            // 1) Intentamos LINK con popup (mantiene mismo uid)
-            await linkWithPopup(auth.currentUser, googleProvider);
-            statusMessage.textContent = "Cuenta Google vinculada (datos preservados).";
-          } catch (err) {
-            console.warn("linkWithPopup falló:", err?.code || err);
-            if (isPopupIssue(err)) {
-              // Guardamos backup y usamos redirect
-              localStorage.setItem(LS_KEYS.anonUid, anonUid);
-              localStorage.setItem(LS_KEYS.anonData, JSON.stringify(anonData));
-              statusMessage.textContent = "Ventana emergente bloqueada. Intentando vínculo por redirección…";
-              try {
-                await linkWithRedirect(auth.currentUser, googleProvider); // navegación
-              } catch (err2) {
-                // Si link falla (cuenta ya existe), intentamos sign-in con redirect y luego copiamos
-                console.warn("linkWithRedirect falló, probando signInWithRedirect:", err2?.code || err2);
-                await signInWithRedirect(auth, googleProvider); // navegación
-              }
-            } else {
-              // Si es p.ej. cuenta ya existe => iniciamos sesión con popup y copiamos
-              const res = await signInWithPopup(auth, googleProvider);
-              const newUid = res.user.uid;
-              if (newUid !== anonUid) {
-                await writeAnnotationsToUserUid(newUid, anonData);
-                statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
-              }
-            }
-          }
-        } else {
-          // Usuario ya autenticado (no anónimo)
-          try {
-            await signInWithPopup(auth, googleProvider);
-          } catch (err) {
-            if (isPopupIssue(err)) {
-              statusMessage.textContent = "Popup bloqueado. Continuando con redirección…";
-              await signInWithRedirect(auth, googleProvider); // navegación
-            } else {
-              throw err;
-            }
-          }
+        // Intentamos link con Google
+        result = await linkWithPopup(auth.currentUser, provider);
+        statusMessage.textContent = "Cuenta Google vinculada correctamente (datos preservados).";
+      } catch (linkErr) {
+        console.warn("Link con Google falló:", linkErr);
+
+        // Si no se puede linkear (por ejemplo la cuenta Google ya existe), hacemos inicio normal con Google
+        result = await signInWithPopup(auth, provider);
+        const newUid = result.user.uid;
+
+        // Copiamos datos anónimos si el uid cambió
+        if (anonUid && newUid !== anonUid && anonData) {
+          await writeAnnotationsToUserUid(newUid, anonData);
+          statusMessage.textContent = "Datos anónimos copiados a tu cuenta Google.";
         }
-      } catch (err) {
-        console.error("Error Google sign-in:", err);
-        statusMessage.textContent = humanAuthError(err);
       }
-    });
+    } else {
+      // Usuario no anónimo: inicio normal
+      result = await signInWithPopup(auth, provider);
+      statusMessage.textContent = "Conectado con Google correctamente.";
+    }
+
+  } catch (err) {
+    console.error("Error Google sign-in:", err);
+    statusMessage.textContent = "Error en inicio con Google.";
+    alert("Error al iniciar sesión con Google: " + (err.message || err.code));
+  }
+});
+
 
     // --- Email modal
     emailOpenBtn.addEventListener('click', () => {
@@ -843,6 +837,7 @@
   </script>
 </body>
 </html>
+
 
 
 
